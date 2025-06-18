@@ -7,6 +7,7 @@ public class TaskManager : MonoBehaviour
     public TMP_InputField titoloInput;
     public TMP_InputField task_input;
     public GameObject taskPrefab;
+    public GameObject SettingPanel;
 
     public Transform lunParent;
     public Transform martParent;
@@ -28,6 +29,8 @@ public class TaskManager : MonoBehaviour
     public Button btnSvuotaTask;
 
     public GameObject notificaPanel;
+
+    private bool show_setting = true;
 
     private void Start()
     {
@@ -131,5 +134,29 @@ public class TaskManager : MonoBehaviour
     {
         if (notificaPanel != null)
             notificaPanel.SetActive(false);
+    }
+
+    public void SettingsPanel()
+    {
+
+        if (show_setting)
+        {
+            SettingPanel.SetActive(false);
+            show_setting = false;
+        }
+        else
+        {
+            SettingPanel.SetActive(true);
+            show_setting = true;
+        }
+    }
+    public void ImpostaFullScreen()
+    {
+        Screen.fullScreen = true;
+    }
+
+    public void ImpostaWindowed()
+    {
+        Screen.fullScreen = false;
     }
 }

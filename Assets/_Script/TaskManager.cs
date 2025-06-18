@@ -1,15 +1,12 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class TaskManager : MonoBehaviour
 {
-    [Header("Input Task")]
     public TMP_InputField titoloInput;
-
-    [Header("Task Prefab")]
     public GameObject taskPrefab;
 
-    [Header("Contenitori Giornalieri")]
     public Transform lunParent;
     public Transform martParent;
     public Transform mercParent;
@@ -18,28 +15,74 @@ public class TaskManager : MonoBehaviour
     public Transform sabParent;
     public Transform domParent;
 
-    [Header("Popup Notifica (Opzionale)")]
+    public Button btnLun;
+    public Button btnMart;
+    public Button btnMerc;
+    public Button btnGiov;
+    public Button btnVen;
+    public Button btnSab;
+    public Button btnDom;
+
+    public Button btnClearForm;
+    public Button btnSvuotaTask;
+
     public GameObject notificaPanel;
+
+    private void Start()
+    {
+        btnLun.onClick.AddListener(() => AggiungiTask("Lun"));
+        btnMart.onClick.AddListener(() => AggiungiTask("Mart"));
+        btnMerc.onClick.AddListener(() => AggiungiTask("Merc"));
+        btnGiov.onClick.AddListener(() => AggiungiTask("Giov"));
+        btnVen.onClick.AddListener(() => AggiungiTask("Ven"));
+        btnSab.onClick.AddListener(() => AggiungiTask("Sab"));
+        btnDom.onClick.AddListener(() => AggiungiTask("Dom"));
+
+        btnClearForm.onClick.AddListener(PulisciForm);
+        btnSvuotaTask.onClick.AddListener(SvuotaTuttiITask);
+    }
 
     public void AggiungiTask(string giorno)
     {
         if (string.IsNullOrWhiteSpace(titoloInput.text)) return;
 
         GameObject nuovoTask = Instantiate(taskPrefab);
-        nuovoTask.GetComponentInChildren<TMP_Text>().text = titoloInput.text;
+        TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
+        if (txt != null) txt.text = titoloInput.text;
 
-        switch (giorno)
+        /*Transform targetParent = giorno switch
         {
-            case "Lun": nuovoTask.transform.SetParent(lunParent, false); break;
-            case "Mart": nuovoTask.transform.SetParent(martParent, false); break;
-            case "Merc": nuovoTask.transform.SetParent(mercParent, false); break;
-            case "Giov": nuovoTask.transform.SetParent(giovParent, false); break;
-            case "Ven": nuovoTask.transform.SetParent(venParent, false); break;
-            case "Sab": nuovoTask.transform.SetParent(sabParent, false); break;
-            case "Dom": nuovoTask.transform.SetParent(domParent, false); break;
-        }
+            "Lun" => lunParent,
+            "Mart" => martParent,
+            "Merc" => mercParent,
+            "Giov" => giovParent,
+            "Ven" => venParent,
+            "Sab" => sabParent,
+            "Dom" => domParent,
+            default => null
+        };
+        */
 
-        titoloInput.text = ""; // Pulisce input dopo aggiunta
+        Transform targetParent = null;
+
+        if (giorno == "Lun") targetParent = lunParent;
+        else if (giorno == "Mart") targetParent = martParent;
+        else if (giorno == "Merc") targetParent = mercParent;
+        else if (giorno == "Giov") targetParent = giovParent;
+        else if (giorno == "Ven") targetParent = venParent;
+        else if (giorno == "Sab") targetParent = sabParent;
+        else if (giorno == "Dom") targetParent = domParent;
+
+        if (targetParent != null)
+        {
+            nuovoTask.transform.SetParent(targetParent, false);
+            titoloInput.text = "";
+            MostraNotifica();
+        }
+        else
+        {
+            Destroy(nuovoTask);
+        }
     }
 
     public void PulisciForm()
@@ -71,7 +114,7 @@ public class TaskManager : MonoBehaviour
         if (notificaPanel != null)
         {
             notificaPanel.SetActive(true);
-            Invoke(nameof(NascondiNotifica), 2f); 
+            Invoke(nameof(NascondiNotifica), 2f);
         }
     }
 
@@ -79,11 +122,5 @@ public class TaskManager : MonoBehaviour
     {
         if (notificaPanel != null)
             notificaPanel.SetActive(false);
-    }
-
-    public void ApriImpostazioni()
-    {
-        Debug.Log("Apertura impostazioni");
-
     }
 }

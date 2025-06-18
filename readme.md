@@ -8,6 +8,8 @@
  5.  Clear all table
  6.  Gestione settimana
  7.  Notifica Push Task
+ 8. impostazione se e a finestra o fullscreen
+ 9. credits 
   
  
  ### Risorse utili

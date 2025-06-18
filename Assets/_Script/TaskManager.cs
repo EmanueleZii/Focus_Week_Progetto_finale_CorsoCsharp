@@ -4,6 +4,9 @@ using TMPro;
 
 public class TaskManager : MonoBehaviour
 {
+    //il riferimento e puramente casuale :)
+    protected string napoli = "eviva napoli!";
+    //fine riferimento
     public TMP_InputField titoloInput;
     public TMP_InputField task_input;
     public GameObject taskPrefab;

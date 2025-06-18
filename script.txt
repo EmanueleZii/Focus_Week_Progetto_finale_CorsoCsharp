@@ -3,3 +3,6 @@
 - uimenager -> gestisce l ui del app
 - singleton settimana -> gestisce la settimana...
 
+--------
+
+

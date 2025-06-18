@@ -1,5 +1,8 @@
 -script 
 
--uimenager -> gestisce l ui del app
--singleton settimana -> gestisce la settimana...
--
+- uimenager -> gestisce l ui del app
+- singleton settimana -> gestisce la settimana...
+
+--------
+
+

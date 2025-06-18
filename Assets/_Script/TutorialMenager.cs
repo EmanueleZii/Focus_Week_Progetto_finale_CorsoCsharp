@@ -10,6 +10,8 @@ public class TutorialManager : MonoBehaviour
 
     public Button btnTutorial;
     public Button btnNextStep;
+    public Button btnSkipTutorial;
+    public Button btnRestartTutorial;
 
     private string[] steps = {
         "Benvenuto! Questo è il tuo planner settimanale.",
@@ -26,9 +28,15 @@ public class TutorialManager : MonoBehaviour
     {
         btnTutorial.onClick.AddListener(StartTutorial);
         btnNextStep.onClick.AddListener(NextStep);
+        btnSkipTutorial.onClick.AddListener(EndTutorial);
+        btnRestartTutorial.onClick.AddListener(RestartTutorial);
 
         tutorialPanel.SetActive(false);
         characterGuide.SetActive(false);
+        tutorialText.gameObject.SetActive(true);
+        btnNextStep.gameObject.SetActive(true);
+        btnSkipTutorial.gameObject.SetActive(true);
+        btnRestartTutorial.gameObject.SetActive(true);
     }
 
     public void StartTutorial()
@@ -36,6 +44,10 @@ public class TutorialManager : MonoBehaviour
         currentStep = 0;
         tutorialPanel.SetActive(true);
         characterGuide.SetActive(true);
+        tutorialText.gameObject.SetActive(true);
+        btnNextStep.gameObject.SetActive(true);
+        btnSkipTutorial.gameObject.SetActive(true);
+        btnRestartTutorial.gameObject.SetActive(true);
         ShowStep();
     }
 
@@ -48,7 +60,10 @@ public class TutorialManager : MonoBehaviour
         }
         else
         {
-            EndTutorial();
+            tutorialText.gameObject.SetActive(false);
+            btnNextStep.gameObject.SetActive(false);
+            btnSkipTutorial.gameObject.SetActive(false);
+            btnRestartTutorial.gameObject.SetActive(true);
         }
     }
 
@@ -57,9 +72,17 @@ public class TutorialManager : MonoBehaviour
         tutorialText.text = steps[currentStep];
     }
 
-    private void EndTutorial()
+    public void EndTutorial()
     {
         tutorialPanel.SetActive(false);
         characterGuide.SetActive(false);
+        tutorialText.gameObject.SetActive(true);
+        btnNextStep.gameObject.SetActive(true);
+        btnSkipTutorial.gameObject.SetActive(true);
+    }
+
+    public void RestartTutorial()
+    {
+        StartTutorial();
     }
 }

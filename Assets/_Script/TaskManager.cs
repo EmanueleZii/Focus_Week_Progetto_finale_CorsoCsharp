@@ -5,6 +5,7 @@ using TMPro;
 public class TaskManager : MonoBehaviour
 {
     public TMP_InputField titoloInput;
+    public TMP_InputField task_input;
     public GameObject taskPrefab;
 
     public Transform lunParent;
@@ -45,23 +46,29 @@ public class TaskManager : MonoBehaviour
     public void AggiungiTask(string giorno)
     {
         if (string.IsNullOrWhiteSpace(titoloInput.text)) return;
+        if (string.IsNullOrWhiteSpace(task_input.text)) return;
 
         GameObject nuovoTask = Instantiate(taskPrefab);
         TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
-        if (txt != null) txt.text = titoloInput.text;
+        if (txt != null)
+        {
+            txt.text = titoloInput.text + ": \n" + task_input.text;
+            /*txt.text = titoloInput.text;
+            txt.text = task_input.text;*/
+        }
 
         /*Transform targetParent = giorno switch
-        {
-            "Lun" => lunParent,
-            "Mart" => martParent,
-            "Merc" => mercParent,
-            "Giov" => giovParent,
-            "Ven" => venParent,
-            "Sab" => sabParent,
-            "Dom" => domParent,
-            default => null
-        };
-        */
+            {
+                "Lun" => lunParent,
+                "Mart" => martParent,
+                "Merc" => mercParent,
+                "Giov" => giovParent,
+                "Ven" => venParent,
+                "Sab" => sabParent,
+                "Dom" => domParent,
+                default => null
+            };
+            */
 
         Transform targetParent = null;
 
@@ -77,6 +84,7 @@ public class TaskManager : MonoBehaviour
         {
             nuovoTask.transform.SetParent(targetParent, false);
             titoloInput.text = "";
+            task_input.text = "";
             MostraNotifica();
         }
         else
@@ -88,6 +96,7 @@ public class TaskManager : MonoBehaviour
     public void PulisciForm()
     {
         titoloInput.text = "";
+        task_input.text = "";
     }
 
     public void SvuotaTuttiITask()

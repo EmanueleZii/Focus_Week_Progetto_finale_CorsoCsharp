@@ -1,12 +1,13 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.IO;
-using System.Text;
-using System.Security.Cryptography;
 
-[System.Serializable]
+[Serializable]
 public class TaskData
 {
     public string giorno;
@@ -14,52 +15,40 @@ public class TaskData
     public string descrizione;
 }
 
-[System.Serializable]
-public class TaskDataList
+[Serializable]
+public class TaskList
 {
     public List<TaskData> tasks = new List<TaskData>();
 }
 
 public class TaskManager : MonoBehaviour
 {
-    protected string napoli = "eviva napoli!";
-
     public TMP_InputField titoloInput;
     public TMP_InputField task_input;
     public GameObject taskPrefab;
     public GameObject SettingPanel;
-
-    public Transform lunParent;
-    public Transform martParent;
-    public Transform mercParent;
-    public Transform giovParent;
-    public Transform venParent;
-    public Transform sabParent;
-    public Transform domParent;
-
-    public Button btnLun;
-    public Button btnMart;
-    public Button btnMerc;
-    public Button btnGiov;
-    public Button btnVen;
-    public Button btnSab;
-    public Button btnDom;
-
-    public Button btnClearForm;
-    public Button btnSvuotaTask;
-
     public GameObject notificaPanel;
+    public TMP_Dropdown dropdownWeekSelector;
+    public GameObject weekSelectorPanel;
 
-    private bool show_setting = true;
-    private TaskDataList taskList = new TaskDataList();
+    public Transform lunParent, martParent, mercParent, giovParent, venParent, sabParent, domParent;
 
-    private string filePercorso => Path.Combine(Application.persistentDataPath, "taskdata.dat");
+    public Button btnLun, btnMart, btnMerc, btnGiov, btnVen, btnSab, btnDom;
+    public Button btnClearForm, btnSvuotaTask, btnChangeWeek;
 
-    private readonly byte[] aesKey = Encoding.UTF8.GetBytes("0123456789abcdef0123456789abcdef"); // 32 byte
-    private readonly byte[] aesIV = Encoding.UTF8.GetBytes("abcdef9876543210"); // 16 byte
+    private int slotCorrente = 1;
+    private TaskList taskList = new TaskList();
+
+    private const int maxSettimane = 4;  // Numero massimo settimane supportate
+
+    private string FilePercorso => Path.Combine(Application.persistentDataPath, $"task_week_{slotCorrente}.dat");
+
+    private readonly byte[] chiave = Encoding.UTF8.GetBytes("12345678901234567890123456789012"); // 32 byte
+    private readonly byte[] iv = Encoding.UTF8.GetBytes("InizialVector123"); // 16 byte
 
     private void Start()
     {
+        // Setup pulsanti giorni
         btnLun.onClick.AddListener(() => AggiungiTask("Lun"));
         btnMart.onClick.AddListener(() => AggiungiTask("Mart"));
         btnMerc.onClick.AddListener(() => AggiungiTask("Merc"));
@@ -70,7 +59,22 @@ public class TaskManager : MonoBehaviour
 
         btnClearForm.onClick.AddListener(PulisciForm);
         btnSvuotaTask.onClick.AddListener(SvuotaTuttiITask);
+        btnChangeWeek.onClick.AddListener(MostraWeekSelector);
 
+        // Popola dropdown con le settimane da 1 a maxSettimane
+        List<string> options = new List<string>();
+        for (int i = 1; i <= maxSettimane; i++)
+        {
+            options.Add($"Settimana {i}");
+        }
+        dropdownWeekSelector.ClearOptions();
+        dropdownWeekSelector.AddOptions(options);
+
+        dropdownWeekSelector.onValueChanged.AddListener(SelezionaSettimana);
+
+        weekSelectorPanel.SetActive(false);
+
+        // Carica dati della settimana 1 (slotCorrente = 1 di default)
         CaricaTask();
     }
 
@@ -82,9 +86,7 @@ public class TaskManager : MonoBehaviour
         GameObject nuovoTask = Instantiate(taskPrefab);
         TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
         if (txt != null)
-        {
-            txt.text = titoloInput.text + ": \n" + task_input.text;
-        }
+            txt.text = $"{titoloInput.text}: \n{task_input.text}";
 
         Transform targetParent = giorno switch
         {
@@ -101,13 +103,7 @@ public class TaskManager : MonoBehaviour
         if (targetParent != null)
         {
             nuovoTask.transform.SetParent(targetParent, false);
-            taskList.tasks.Add(new TaskData
-            {
-                giorno = giorno,
-                titolo = titoloInput.text,
-                descrizione = task_input.text
-            });
-
+            taskList.tasks.Add(new TaskData { giorno = giorno, titolo = titoloInput.text, descrizione = task_input.text });
             titoloInput.text = "";
             task_input.text = "";
             MostraNotifica();
@@ -134,9 +130,7 @@ public class TaskManager : MonoBehaviour
         Svuota(venParent);
         Svuota(sabParent);
         Svuota(domParent);
-
         taskList.tasks.Clear();
-        SalvaTask();
     }
 
     private void Svuota(Transform parent)
@@ -162,93 +156,99 @@ public class TaskManager : MonoBehaviour
             notificaPanel.SetActive(false);
     }
 
-    public void SettingsPanel()
+    public void MostraWeekSelector()
     {
-        SettingPanel.SetActive(!show_setting);
-        show_setting = !show_setting;
+        weekSelectorPanel.SetActive(!weekSelectorPanel.activeSelf);
     }
 
-    public void ImpostaFullScreen()
+    public void SelezionaSettimana(int index)
     {
-        Screen.fullScreen = true;
+        slotCorrente = index + 1; // Set slot 1-based
+        SvuotaTuttiITask();
+        CaricaTask();
     }
 
-    public void ImpostaWindowed()
-    {
-        Screen.fullScreen = false;
-    }
+    public void ImpostaFullScreen() => Screen.fullScreen = true;
+    public void ImpostaWindowed() => Screen.fullScreen = false;
 
     private void SalvaTask()
     {
-        string json = JsonUtility.ToJson(taskList, true);
-        byte[] dati = Encoding.UTF8.GetBytes(json);
-        byte[] criptati = Cripta(dati);
-        File.WriteAllBytes(filePercorso, criptati);
+        try
+        {
+            string json = JsonUtility.ToJson(taskList, true);
+            byte[] datiJson = Encoding.UTF8.GetBytes(json);
+            byte[] criptati = Cripta(datiJson);
+            File.WriteAllBytes(FilePercorso, criptati);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("Errore salvataggio: " + e.Message);
+        }
     }
 
     private void CaricaTask()
     {
-        if (!File.Exists(filePercorso)) return;
+        taskList = new TaskList();
+        if (!File.Exists(FilePercorso)) return;
 
-        byte[] datiCriptati = File.ReadAllBytes(filePercorso);
-        byte[] dati = Decripta(datiCriptati);
-        string json = Encoding.UTF8.GetString(dati);
-        taskList = JsonUtility.FromJson<TaskDataList>(json);
-
-        foreach (TaskData task in taskList.tasks)
+        try
         {
-            GameObject nuovoTask = Instantiate(taskPrefab);
-            TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
-            if (txt != null)
-            {
-                txt.text = task.titolo + ": \n" + task.descrizione;
-            }
+            byte[] criptati = File.ReadAllBytes(FilePercorso);
+            byte[] datiJson = Decripta(criptati);
+            string json = Encoding.UTF8.GetString(datiJson);
+            taskList = JsonUtility.FromJson<TaskList>(json);
 
-            Transform targetParent = task.giorno switch
+            foreach (var task in taskList.tasks)
             {
-                "Lun" => lunParent,
-                "Mart" => martParent,
-                "Merc" => mercParent,
-                "Giov" => giovParent,
-                "Ven" => venParent,
-                "Sab" => sabParent,
-                "Dom" => domParent,
-                _ => null
-            };
+                GameObject nuovoTask = Instantiate(taskPrefab);
+                TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
+                if (txt != null)
+                    txt.text = $"{task.titolo}: \n{task.descrizione}";
 
-            if (targetParent != null)
-            {
-                nuovoTask.transform.SetParent(targetParent, false);
+                Transform targetParent = task.giorno switch
+                {
+                    "Lun" => lunParent,
+                    "Mart" => martParent,
+                    "Merc" => mercParent,
+                    "Giov" => giovParent,
+                    "Ven" => venParent,
+                    "Sab" => sabParent,
+                    "Dom" => domParent,
+                    _ => null
+                };
+
+                if (targetParent != null)
+                    nuovoTask.transform.SetParent(targetParent, false);
             }
-            else
-            {
-                Destroy(nuovoTask);
-            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Errore caricamento: " + e.Message);
         }
     }
 
     private byte[] Cripta(byte[] dati)
     {
         using Aes aes = Aes.Create();
-        aes.Key = aesKey;
-        aes.IV = aesIV;
+        aes.Key = chiave;
+        aes.IV = iv;
 
-        using MemoryStream ms = new MemoryStream();
-        using CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
+        using MemoryStream ms = new();
+        using CryptoStream cs = new(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
         cs.Write(dati, 0, dati.Length);
-        cs.FlushFinalBlock();
+        cs.Close();
         return ms.ToArray();
     }
 
     private byte[] Decripta(byte[] datiCriptati)
     {
         using Aes aes = Aes.Create();
-        aes.Key = aesKey;
-        aes.IV = aesIV;
+        aes.Key = chiave;
+        aes.IV = iv;
 
-        using MemoryStream ms = new MemoryStream(datiCriptati);
-        using CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
-        using MemoryStream output = new MemoryStream();
+        using MemoryStream ms = new(datiCriptati);
+        using CryptoStream cs = new(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
+        using MemoryStream output = new();
         cs.CopyTo(output);
         return output.ToArray();
     }

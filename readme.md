@@ -1,20 +1,62 @@
-### Focus Week 
+# 🗓️ Weekly Task Manager - Unity 6 Project
 
-- Funzionalita 
- 1.  Aggiungi task
- 2.  Delete task
- 3.  Edit task
- 4.  Clear form (clear input field)
- 5.  Clear all table
- 6.  Gestione settimana
- 7.  Notifica Push Task
- 8. impostazione se e a finestra o fullscreen
- 9. credits 
-  
- 
- ### Risorse utili
- 1. Unity 6.0 o superiore
- 2. C# 
+Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Progetto pensato per migliorare l'organizzazione personale e sperimentare con lo sviluppo di interfacce utente, salvataggio dati e gestione eventi all'interno di Unity.
 
-### Progetto Di Gruppo
+## 🎯 Obiettivi del Progetto
 
+- Gestione di attività giornaliere su una settimana (Lunedì - Domenica)
+- Aggiunta, modifica e rimozione dei task
+- Salvataggio dei dati in locale (PlayerPrefs o file JSON/XML)
+- Interfaccia utente semplice e intuitiva
+- Sistema di completamento task (checkbox)
+- Navigazione tra i giorni della settimana
+
+## 🛠️ Tecnologie Utilizzate
+
+- **Unity 6** (motore di gioco)
+- **C#** (logica e scripting)
+- **UI Toolkit** / Canvas UI System
+- **PlayerPrefs / File System** per il salvataggio
+- **ScriptableObjects** (opzionale, per gestire i dati dei task)
+
+## 🧩 Funzionalità Implementate
+
+- [x] Visualizzazione lista task giornalieri
+- [x] Aggiunta di nuovi task
+- [x] Modifica e cancellazione task
+- [x] Completamento task con checkbox
+- [x] Salvataggio automatico
+- [ ] Notifiche o reminder (coming soon)
+- [ ] Drag & drop task (opzionale)
+
+## 🖼️ Screenshot (opzionale)
+
+*Aggiungi qui immagini del progetto per mostrare l'interfaccia e il funzionamento.*
+
+## 📁 Struttura del Progetto
+
+Assets/
+├── Scripts/
+│   ├── MenuMenager.cs
+│   ├── TaskMenager.cs
+│   └── TutorialMenager.cs
+├── Prefabs/
+|   |
+|   |
+|CanvasPrefabs
+│   ├── CanvasTutorial.prefab
+│   ├── CanvasMenu.prefab
+│   └── CanvasMenu.prefab
+|   |
+|   |
+|PanelPrefabs
+|   ├── MainCanvas.prefab
+│   ├── TaskItem.prefab
+│   └── DayPanel.prefab
+
+
+## ▶️ Come Avviare il Progetto
+
+1. Clona il repository:
+   ```bash
+   git clone https://github.com/tuo-username/weekly-task-manager-unity6.git

@@ -6,9 +6,9 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
 
 - Gestione di attività giornaliere su una settimana (Lunedì - Domenica)
 - Aggiunta, modifica e rimozione dei task
-- Salvataggio dei dati in locale (PlayerPrefs o file JSON/XML)
+- Salvataggio dei dati in locale (PlayerPrefs o file Binario)
 - Interfaccia utente semplice e intuitiva
-- Sistema di completamento task (checkbox)
+- Sistema di task 
 - Navigazione tra i giorni della settimana
 
 ## 🛠️ Tecnologie Utilizzate
@@ -17,7 +17,7 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
 - **C#** (logica e scripting)
 - **UI Toolkit** / Canvas UI System
 - **PlayerPrefs / File System** per il salvataggio
-- **ScriptableObjects** (opzionale, per gestire i dati dei task)
+- ** Crittografia
 
 ## 🧩 Funzionalità Implementate
 
@@ -26,8 +26,8 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
 - [x] Modifica e cancellazione task
 - [x] Completamento task con checkbox
 - [x] Salvataggio automatico
-- [ ] Notifiche o reminder (coming soon)
-- [ ] Drag & drop task (opzionale)
+- [x] Notifiche Push 
+- [ ]
 
 ## ▶️ Come Avviare il Progetto
 

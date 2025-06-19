@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 50029983}
   - component: {fileID: 50029982}
+  - component: {fileID: 50029984}
   m_Layer: 0
   m_Name: Tutorial_Menager
   m_TagString: Untagged
@@ -170,6 +171,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &50029984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 50029981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff9747799c2a645169b94d05c2a7ef69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  settingbtn: {fileID: 0}
 --- !u!114 &141165577 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8757138634964464150, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
@@ -593,7 +607,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2201722904858189476, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 81.5
+      value: 81.49994
       objectReference: {fileID: 0}
     - target: {fileID: 2201722904858189476, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -857,7 +871,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4389499328179414570, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 371.5
+      value: 371.49994
       objectReference: {fileID: 0}
     - target: {fileID: 4389499328179414570, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -905,7 +919,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5009076809657225970, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 951.5
+      value: 951.49994
       objectReference: {fileID: 0}
     - target: {fileID: 5009076809657225970, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -1081,7 +1095,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7210745545941492614, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 661.5
+      value: 661.49994
       objectReference: {fileID: 0}
     - target: {fileID: 7210745545941492614, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -1103,6 +1117,34 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 6382530652031919921, guid: c203c3cb1179e4295bdc62cc80bbe5ac, type: 3}
+    - target: {fileID: 7556166401645765959, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7556166401645765959, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7556166401645765959, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 50029984}
+    - target: {fileID: 7556166401645765959, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7556166401645765959, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: AppButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 7556166401645765959, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: ButtonUIMenager, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7556166401645765959, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 7602806034481576842, guid: e7f62618c93394f5392dd588ad587c42, type: 3}
       propertyPath: m_Value
       value: 1

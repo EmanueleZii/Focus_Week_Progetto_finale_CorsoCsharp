@@ -971,6 +971,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b52d37d632f61442ba4de3fcc80b9cb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nomeGiorno: 
 --- !u!114 &1263093715 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8988769345375015615, guid: 783be4d1f00624910bb22ce244895d4d, type: 3}
@@ -6517,7 +6518,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -53.000244, y: -26.699951}
+  m_AnchoredPosition: {x: -53.000183, y: -26.699951}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &6730418254784758077
@@ -6578,6 +6579,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b52d37d632f61442ba4de3fcc80b9cb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nomeGiorno: 
 --- !u!1 &6785452706505092877
 GameObject:
   m_ObjectHideFlags: 0
@@ -6716,6 +6718,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b52d37d632f61442ba4de3fcc80b9cb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nomeGiorno: 
 --- !u!114 &6959676532234108661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7273,6 +7276,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b52d37d632f61442ba4de3fcc80b9cb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nomeGiorno: 
 --- !u!1 &7426114766486403698
 GameObject:
   m_ObjectHideFlags: 0
@@ -7895,6 +7899,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b52d37d632f61442ba4de3fcc80b9cb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nomeGiorno: 
 --- !u!114 &8342777078127829050
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8043,6 +8048,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b52d37d632f61442ba4de3fcc80b9cb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nomeGiorno: 
 --- !u!1001 &8499008058568177142
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8085,7 +8091,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3761439465301264137, guid: 783be4d1f00624910bb22ce244895d4d, type: 3}
       propertyPath: m_SizeDelta.y
-      value: -1245.1593
+      value: -704.46
       objectReference: {fileID: 0}
     - target: {fileID: 3761439465301264137, guid: 783be4d1f00624910bb22ce244895d4d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8117,11 +8123,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3761439465301264137, guid: 783be4d1f00624910bb22ce244895d4d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 826
+      value: 828.1
       objectReference: {fileID: 0}
     - target: {fileID: 3761439465301264137, guid: 783be4d1f00624910bb22ce244895d4d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 382.77963
+      value: 130
       objectReference: {fileID: 0}
     - target: {fileID: 3761439465301264137, guid: 783be4d1f00624910bb22ce244895d4d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -8371,6 +8377,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b52d37d632f61442ba4de3fcc80b9cb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nomeGiorno: 
 --- !u!222 &8640897707354593945
 CanvasRenderer:
   m_ObjectHideFlags: 0

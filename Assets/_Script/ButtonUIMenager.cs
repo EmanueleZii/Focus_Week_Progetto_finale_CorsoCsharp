@@ -14,11 +14,16 @@ public class ButtonUIMenager : MonoBehaviour
         //Debug.Log("Tutorial Button Clicked");
         SceneManager.LoadScene("Tutorial");
     }
+    public void AppButton()
+    {
+        //Debug.Log("Tutorial Button Clicked");
+        SceneManager.LoadScene("FocusWeek");
+    }
 
     public void SettingsButton()
     {
-       // Debug.Log("Settings Button Clicked");
+        // Debug.Log("Settings Button Clicked");
         isSettingsOpen = !isSettingsOpen;
-        settingbtn.SetActive(isSettingsOpen);   
+        settingbtn.SetActive(isSettingsOpen);
     }
 }

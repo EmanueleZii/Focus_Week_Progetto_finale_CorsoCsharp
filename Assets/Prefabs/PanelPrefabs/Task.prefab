@@ -91,7 +91,7 @@ GameObject:
   - component: {fileID: 5539242824694537125}
   - component: {fileID: 6664114134810789709}
   m_Layer: 5
-  m_Name: Btn_Delete
+  m_Name: BtnDelete
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -114,7 +114,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 75.499985, y: 4.5573015}
+  m_AnchoredPosition: {x: 73.3, y: 4.5573015}
   m_SizeDelta: {x: 27.3553, y: 23.6426}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2808008893794554316
@@ -622,7 +622,7 @@ GameObject:
   - component: {fileID: 5573565884640055176}
   - component: {fileID: 1235437635481001288}
   m_Layer: 5
-  m_Name: Btn_Edit
+  m_Name: BtnEdit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -645,7 +645,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 75.5, y: 28.2}
+  m_AnchoredPosition: {x: 78, y: 28.2}
   m_SizeDelta: {x: 27.3553, y: 23.6426}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6643510425007011433

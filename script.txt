@@ -1,8 +1,246 @@
--script 
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using System.Collections.Generic;
+using System.IO;
 
-- uimenager -> gestisce l ui del app
-- singleton settimana -> gestisce la settimana...
+[System.Serializable]
+public class TaskData
+{
+    public string giorno;
+    public string titolo;
+    public string descrizione;
+}
 
---------
+[System.Serializable]
+public class TaskList
+{
+    public List<TaskData> tasks = new List<TaskData>();
+}
 
+public class TaskManager : MonoBehaviour
+{
+    protected string napoli = "eviva napoli!";
 
+    public TMP_InputField titoloInput;
+    public TMP_InputField task_input;
+    public GameObject taskPrefab;
+    public GameObject SettingPanel;
+
+    public Transform lunParent;
+    public Transform martParent;
+    public Transform mercParent;
+    public Transform giovParent;
+    public Transform venParent;
+    public Transform sabParent;
+    public Transform domParent;
+
+    public Button btnLun;
+    public Button btnMart;
+    public Button btnMerc;
+    public Button btnGiov;
+    public Button btnVen;
+    public Button btnSab;
+    public Button btnDom;
+
+    public Button btnClearForm;
+    public Button btnSvuotaTask;
+
+    public GameObject notificaPanel;
+
+    private bool show_setting = true;
+
+    private void Start()
+    {
+        btnLun.onClick.AddListener(() => AggiungiTask("Lun"));
+        btnMart.onClick.AddListener(() => AggiungiTask("Mart"));
+        btnMerc.onClick.AddListener(() => AggiungiTask("Merc"));
+        btnGiov.onClick.AddListener(() => AggiungiTask("Giov"));
+        btnVen.onClick.AddListener(() => AggiungiTask("Ven"));
+        btnSab.onClick.AddListener(() => AggiungiTask("Sab"));
+        btnDom.onClick.AddListener(() => AggiungiTask("Dom"));
+
+        btnClearForm.onClick.AddListener(PulisciForm);
+        btnSvuotaTask.onClick.AddListener(() => {
+            SvuotaTuttiITask();
+            SalvaTask();
+        });
+
+        CaricaTask(); // Caricamento automatico all'avvio
+    }
+
+    public void AggiungiTask(string giorno)
+    {
+        if (string.IsNullOrWhiteSpace(titoloInput.text)) return;
+        if (string.IsNullOrWhiteSpace(task_input.text)) return;
+
+        GameObject nuovoTask = Instantiate(taskPrefab);
+        TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
+        if (txt != null)
+        {
+            txt.text = titoloInput.text + ": \n" + task_input.text;
+        }
+
+        Transform targetParent = GetParentByGiorno(giorno);
+
+        if (targetParent != null)
+        {
+            nuovoTask.transform.SetParent(targetParent, false);
+            titoloInput.text = "";
+            task_input.text = "";
+            MostraNotifica();
+            SalvaTask(); // Salvataggio automatico dopo aggiunta
+        }
+        else
+        {
+            Destroy(nuovoTask);
+        }
+    }
+
+    public void PulisciForm()
+    {
+        titoloInput.text = "";
+        task_input.text = "";
+    }
+
+    public void SvuotaTuttiITask()
+    {
+        Svuota(lunParent);
+        Svuota(martParent);
+        Svuota(mercParent);
+        Svuota(giovParent);
+        Svuota(venParent);
+        Svuota(sabParent);
+        Svuota(domParent);
+    }
+
+    private void Svuota(Transform parent)
+    {
+        foreach (Transform child in parent)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+
+    public void MostraNotifica()
+    {
+        if (notificaPanel != null)
+        {
+            notificaPanel.SetActive(true);
+            Invoke(nameof(NascondiNotifica), 2f);
+        }
+    }
+
+    private void NascondiNotifica()
+    {
+        if (notificaPanel != null)
+            notificaPanel.SetActive(false);
+    }
+
+    public void SettingsPanel()
+    {
+        SettingPanel.SetActive(show_setting);
+        show_setting = !show_setting;
+    }
+
+    public void ImpostaFullScreen()
+    {
+        Screen.fullScreen = true;
+    }
+
+    public void ImpostaWindowed()
+    {
+        Screen.fullScreen = false;
+    }
+
+    // SALVATAGGIO
+
+    private void SalvaTask()
+    {
+        TaskList lista = new TaskList();
+
+        AggiungiTaskDaGiorno(lunParent, "Lun", lista);
+        AggiungiTaskDaGiorno(martParent, "Mart", lista);
+        AggiungiTaskDaGiorno(mercParent, "Merc", lista);
+        AggiungiTaskDaGiorno(giovParent, "Giov", lista);
+        AggiungiTaskDaGiorno(venParent, "Ven", lista);
+        AggiungiTaskDaGiorno(sabParent, "Sab", lista);
+        AggiungiTaskDaGiorno(domParent, "Dom", lista);
+
+        string json = JsonUtility.ToJson(lista, true);
+        File.WriteAllText(Application.persistentDataPath + "/tasks.json", json);
+        Debug.Log("Tasks salvati in: " + Application.persistentDataPath);
+    }
+
+    private void AggiungiTaskDaGiorno(Transform parent, string giorno, TaskList lista)
+    {
+        foreach (Transform child in parent)
+        {
+            TMP_Text txt = child.GetComponentInChildren<TMP_Text>();
+            if (txt != null)
+            {
+                string[] parts = txt.text.Split(new[] { ": \n" }, System.StringSplitOptions.None);
+                if (parts.Length == 2)
+                {
+                    TaskData t = new TaskData
+                    {
+                        giorno = giorno,
+                        titolo = parts[0],
+                        descrizione = parts[1]
+                    };
+                    lista.tasks.Add(t);
+                }
+            }
+        }
+    }
+
+    // CARICAMENTO
+
+    private void CaricaTask()
+    {
+        string path = Application.persistentDataPath + "/tasks.json";
+        if (!File.Exists(path)) return;
+
+        string json = File.ReadAllText(path);
+        TaskList lista = JsonUtility.FromJson<TaskList>(json);
+
+        SvuotaTuttiITask();
+
+        foreach (TaskData t in lista.tasks)
+        {
+            GameObject nuovoTask = Instantiate(taskPrefab);
+            TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
+            if (txt != null)
+            {
+                txt.text = t.titolo + ": \n" + t.descrizione;
+            }
+
+            Transform targetParent = GetParentByGiorno(t.giorno);
+            if (targetParent != null)
+            {
+                nuovoTask.transform.SetParent(targetParent, false);
+            }
+            else
+            {
+                Destroy(nuovoTask);
+            }
+        }
+
+        Debug.Log("Tasks caricati da: " + path);
+    }
+
+    private Transform GetParentByGiorno(string giorno)
+    {
+        switch (giorno)
+        {
+            case "Lun": return lunParent;
+            case "Mart": return martParent;
+            case "Merc": return mercParent;
+            case "Giov": return giovParent;
+            case "Ven": return venParent;
+            case "Sab": return sabParent;
+            case "Dom": return domParent;
+            default: return null;
+        }
+    }
+}

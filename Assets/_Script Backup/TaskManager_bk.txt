@@ -345,10 +345,10 @@ public class TaskManager : MonoBehaviour
         using Aes aes = Aes.Create();
         aes.Key = chiave;
         aes.IV = iv;
-        using MemoryStream ms = new MemoryStream();
-        using CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
+        using MemoryStream ms = new();
+        using CryptoStream cs = new(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
         cs.Write(dati, 0, dati.Length);
-        cs.FlushFinalBlock();
+        cs.Close();
         return ms.ToArray();
     }
 
@@ -357,36 +357,10 @@ public class TaskManager : MonoBehaviour
         using Aes aes = Aes.Create();
         aes.Key = chiave;
         aes.IV = iv;
-        using MemoryStream ms = new MemoryStream();
-        using CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write);
-        cs.Write(dati, 0, dati.Length);
-        cs.FlushFinalBlock();
-        return ms.ToArray();
-    }
-
-    public void UpdateTaskGiorno(GameObject taskGO, string nuovoGiorno)
-    {
-        TMP_Text txt = taskGO.transform.Find("TaskText")?.GetComponent<TMP_Text>();
-        if (txt == null) return;
-
-        TaskData td = null;
-        int idx = -1;
-        for (int i = 0; i < taskList.tasks.Count; i++)
-        {
-            TaskData task = taskList.tasks[i];
-            string expectedText = $"{task.titolo} ({task.dataOraCreazione}):\n{task.descrizione}";
-            if (expectedText == txt.text)
-            {
-                td = task;
-                idx = i;
-                break;
-            }
-        }
-
-        if (td != null)
-        {
-            td.giorno = nuovoGiorno;
-            SalvaTask();
-        }
+        using MemoryStream ms = new(dati);
+        using CryptoStream cs = new(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
+        using MemoryStream output = new();
+        cs.CopyTo(output);
+        return output.ToArray();
     }
 }

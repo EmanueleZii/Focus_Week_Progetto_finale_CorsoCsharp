@@ -29,32 +29,6 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
 - [ ] Notifiche o reminder (coming soon)
 - [ ] Drag & drop task (opzionale)
 
-## 🖼️ Screenshot (opzionale)
-
-*Aggiungi qui immagini del progetto per mostrare l'interfaccia e il funzionamento.*
-
-## 📁 Struttura del Progetto
-
-Assets/
-├── Scripts/
-│   ├── MenuMenager.cs
-│   ├── TaskMenager.cs
-│   └── TutorialMenager.cs
-├── Prefabs/
-|   |
-|   |
-|CanvasPrefabs
-│   ├── CanvasTutorial.prefab
-│   ├── CanvasMenu.prefab
-│   └── CanvasMenu.prefab
-|   |
-|   |
-|PanelPrefabs
-|   ├── MainCanvas.prefab
-│   ├── TaskItem.prefab
-│   └── DayPanel.prefab
-
-
 ## ▶️ Come Avviare il Progetto
 
 1. Clona il repository:

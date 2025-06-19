@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class TutorialManager : MonoBehaviour
@@ -79,6 +80,7 @@ public class TutorialManager : MonoBehaviour
         tutorialText.gameObject.SetActive(true);
         btnNextStep.gameObject.SetActive(true);
         btnSkipTutorial.gameObject.SetActive(true);
+        SceneManager.LoadScene("FocusWeek");
     }
 
     public void RestartTutorial()

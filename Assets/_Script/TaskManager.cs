@@ -1,12 +1,29 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.IO;
+using System.Text;
+using System.Security.Cryptography;
+
+[System.Serializable]
+public class TaskData
+{
+    public string giorno;
+    public string titolo;
+    public string descrizione;
+}
+
+[System.Serializable]
+public class TaskDataList
+{
+    public List<TaskData> tasks = new List<TaskData>();
+}
 
 public class TaskManager : MonoBehaviour
 {
-    //il riferimento e puramente casuale :)
     protected string napoli = "eviva napoli!";
-    //fine riferimento
+
     public TMP_InputField titoloInput;
     public TMP_InputField task_input;
     public GameObject taskPrefab;
@@ -34,6 +51,12 @@ public class TaskManager : MonoBehaviour
     public GameObject notificaPanel;
 
     private bool show_setting = true;
+    private TaskDataList taskList = new TaskDataList();
+
+    private string filePercorso => Path.Combine(Application.persistentDataPath, "taskdata.dat");
+
+    private readonly byte[] aesKey = Encoding.UTF8.GetBytes("0123456789abcdef0123456789abcdef"); // 32 byte
+    private readonly byte[] aesIV = Encoding.UTF8.GetBytes("abcdef9876543210"); // 16 byte
 
     private void Start()
     {
@@ -47,6 +70,8 @@ public class TaskManager : MonoBehaviour
 
         btnClearForm.onClick.AddListener(PulisciForm);
         btnSvuotaTask.onClick.AddListener(SvuotaTuttiITask);
+
+        CaricaTask();
     }
 
     public void AggiungiTask(string giorno)
@@ -59,39 +84,34 @@ public class TaskManager : MonoBehaviour
         if (txt != null)
         {
             txt.text = titoloInput.text + ": \n" + task_input.text;
-            /*txt.text = titoloInput.text;
-            txt.text = task_input.text;*/
         }
 
-        /*Transform targetParent = giorno switch
-            {
-                "Lun" => lunParent,
-                "Mart" => martParent,
-                "Merc" => mercParent,
-                "Giov" => giovParent,
-                "Ven" => venParent,
-                "Sab" => sabParent,
-                "Dom" => domParent,
-                default => null
-            };
-            */
-
-        Transform targetParent = null;
-
-        if (giorno == "Lun") targetParent = lunParent;
-        else if (giorno == "Mart") targetParent = martParent;
-        else if (giorno == "Merc") targetParent = mercParent;
-        else if (giorno == "Giov") targetParent = giovParent;
-        else if (giorno == "Ven") targetParent = venParent;
-        else if (giorno == "Sab") targetParent = sabParent;
-        else if (giorno == "Dom") targetParent = domParent;
+        Transform targetParent = giorno switch
+        {
+            "Lun" => lunParent,
+            "Mart" => martParent,
+            "Merc" => mercParent,
+            "Giov" => giovParent,
+            "Ven" => venParent,
+            "Sab" => sabParent,
+            "Dom" => domParent,
+            _ => null
+        };
 
         if (targetParent != null)
         {
             nuovoTask.transform.SetParent(targetParent, false);
+            taskList.tasks.Add(new TaskData
+            {
+                giorno = giorno,
+                titolo = titoloInput.text,
+                descrizione = task_input.text
+            });
+
             titoloInput.text = "";
             task_input.text = "";
             MostraNotifica();
+            SalvaTask();
         }
         else
         {
@@ -114,6 +134,9 @@ public class TaskManager : MonoBehaviour
         Svuota(venParent);
         Svuota(sabParent);
         Svuota(domParent);
+
+        taskList.tasks.Clear();
+        SalvaTask();
     }
 
     private void Svuota(Transform parent)
@@ -141,18 +164,10 @@ public class TaskManager : MonoBehaviour
 
     public void SettingsPanel()
     {
-
-        if (show_setting)
-        {
-            SettingPanel.SetActive(false);
-            show_setting = false;
-        }
-        else
-        {
-            SettingPanel.SetActive(true);
-            show_setting = true;
-        }
+        SettingPanel.SetActive(!show_setting);
+        show_setting = !show_setting;
     }
+
     public void ImpostaFullScreen()
     {
         Screen.fullScreen = true;
@@ -161,5 +176,80 @@ public class TaskManager : MonoBehaviour
     public void ImpostaWindowed()
     {
         Screen.fullScreen = false;
+    }
+
+    private void SalvaTask()
+    {
+        string json = JsonUtility.ToJson(taskList, true);
+        byte[] dati = Encoding.UTF8.GetBytes(json);
+        byte[] criptati = Cripta(dati);
+        File.WriteAllBytes(filePercorso, criptati);
+    }
+
+    private void CaricaTask()
+    {
+        if (!File.Exists(filePercorso)) return;
+
+        byte[] datiCriptati = File.ReadAllBytes(filePercorso);
+        byte[] dati = Decripta(datiCriptati);
+        string json = Encoding.UTF8.GetString(dati);
+        taskList = JsonUtility.FromJson<TaskDataList>(json);
+
+        foreach (TaskData task in taskList.tasks)
+        {
+            GameObject nuovoTask = Instantiate(taskPrefab);
+            TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
+            if (txt != null)
+            {
+                txt.text = task.titolo + ": \n" + task.descrizione;
+            }
+
+            Transform targetParent = task.giorno switch
+            {
+                "Lun" => lunParent,
+                "Mart" => martParent,
+                "Merc" => mercParent,
+                "Giov" => giovParent,
+                "Ven" => venParent,
+                "Sab" => sabParent,
+                "Dom" => domParent,
+                _ => null
+            };
+
+            if (targetParent != null)
+            {
+                nuovoTask.transform.SetParent(targetParent, false);
+            }
+            else
+            {
+                Destroy(nuovoTask);
+            }
+        }
+    }
+
+    private byte[] Cripta(byte[] dati)
+    {
+        using Aes aes = Aes.Create();
+        aes.Key = aesKey;
+        aes.IV = aesIV;
+
+        using MemoryStream ms = new MemoryStream();
+        using CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
+        cs.Write(dati, 0, dati.Length);
+        cs.FlushFinalBlock();
+        return ms.ToArray();
+    }
+
+    private byte[] Decripta(byte[] datiCriptati)
+    {
+        using Aes aes = Aes.Create();
+        aes.Key = aesKey;
+        aes.IV = aesIV;
+
+        using MemoryStream ms = new MemoryStream(datiCriptati);
+        using CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
+        using MemoryStream output = new MemoryStream();
+        cs.CopyTo(output);
+        return output.ToArray();
     }
 }

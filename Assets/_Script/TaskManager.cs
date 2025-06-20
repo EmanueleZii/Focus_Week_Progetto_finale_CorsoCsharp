@@ -14,6 +14,9 @@ public class TaskData
     public string titolo;
     public string descrizione;
     public string dataOraCreazione;
+
+    // Nuova proprietà priorità
+    public int priorita = 0;
 }
 
 [Serializable]
@@ -26,6 +29,9 @@ public class TaskManager : MonoBehaviour
 {
     public TMP_InputField titoloInput;
     public TMP_InputField task_input;
+
+    // Aggiunto campo per priorità
+    public TMP_Dropdown prioritaDropdown;
 
     public GameObject taskPrefab;
     public GameObject SettingPanel;
@@ -79,6 +85,13 @@ public class TaskManager : MonoBehaviour
         dropdownWeekSelector.AddOptions(options);
         dropdownWeekSelector.onValueChanged.AddListener(SelezionaSettimana);
 
+        // Setup priorità dropdown (0 = Bassa, 1 = Media, 2 = Alta)
+        if (prioritaDropdown != null)
+        {
+            prioritaDropdown.ClearOptions();
+            prioritaDropdown.AddOptions(new List<string> { "Bassa", "Media", "Alta" });
+        }
+
         weekSelectorPanel.SetActive(false);
         btnConfermaModifica.gameObject.SetActive(false);
 
@@ -125,11 +138,13 @@ public class TaskManager : MonoBehaviour
                 giorno = giorno,
                 titolo = titoloInput.text,
                 descrizione = task_input.text,
-                dataOraCreazione = dataOra
+                dataOraCreazione = dataOra,
+                priorita = prioritaDropdown != null ? prioritaDropdown.value : 0
             };
             taskList.tasks.Add(newTaskData);
 
             AggiungiListenerTask(nuovoTask, newTaskData);
+            ApplicaStilePriorita(nuovoTask, newTaskData.priorita);
 
             PulisciForm();
             SalvaTask();
@@ -198,6 +213,8 @@ public class TaskManager : MonoBehaviour
         TaskData task = taskList.tasks[index];
         titoloInput.text = task.titolo;
         task_input.text = task.descrizione;
+        if (prioritaDropdown != null)
+            prioritaDropdown.value = task.priorita;
 
         taskInModifica = taskGO;
         indiceTaskInModifica = index;
@@ -212,10 +229,13 @@ public class TaskManager : MonoBehaviour
             TaskData task = taskList.tasks[indiceTaskInModifica];
             task.titolo = titoloInput.text;
             task.descrizione = task_input.text;
+            task.priorita = prioritaDropdown != null ? prioritaDropdown.value : 0;
 
             TMP_Text txt = taskInModifica.transform.Find("TaskText")?.GetComponent<TMP_Text>();
             if (txt != null)
                 txt.text = $"{task.titolo} ({task.dataOraCreazione}):\n{task.descrizione}";
+
+            ApplicaStilePriorita(taskInModifica, task.priorita);
 
             PulisciForm();
             taskInModifica = null;
@@ -232,6 +252,8 @@ public class TaskManager : MonoBehaviour
     {
         titoloInput.text = "";
         task_input.text = "";
+        if (prioritaDropdown != null)
+            prioritaDropdown.value = 0;
         taskInModifica = null;
         indiceTaskInModifica = -1;
         btnConfermaModifica.gameObject.SetActive(false);
@@ -334,9 +356,15 @@ public class TaskManager : MonoBehaviour
 
                 Transform parent = GetParentPerGiorno(task.giorno);
                 if (parent != null)
+                {
                     nuovoTask.transform.SetParent(parent, false);
-
-                AggiungiListenerTask(nuovoTask, task);
+                    AggiungiListenerTask(nuovoTask, task);
+                    ApplicaStilePriorita(nuovoTask, task.priorita);
+                }
+                else
+                {
+                    Destroy(nuovoTask);
+                }
             }
         }
         catch (Exception e)
@@ -347,26 +375,30 @@ public class TaskManager : MonoBehaviour
 
     private byte[] Cripta(byte[] dati)
     {
-        using Aes aes = Aes.Create();
-        aes.Key = chiave;
-        aes.IV = iv;
-        using MemoryStream ms = new MemoryStream();
-        using CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
-        cs.Write(dati, 0, dati.Length);
-        cs.FlushFinalBlock();
-        return ms.ToArray();
+        using (Aes aes = Aes.Create())
+        {
+            aes.Key = chiave;
+            aes.IV = iv;
+
+            using (var encryptor = aes.CreateEncryptor(aes.Key, aes.IV))
+            {
+                return encryptor.TransformFinalBlock(dati, 0, dati.Length);
+            }
+        }
     }
 
     private byte[] Decripta(byte[] dati)
     {
-        using Aes aes = Aes.Create();
-        aes.Key = chiave;
-        aes.IV = iv;
-        using MemoryStream ms = new MemoryStream();
-        using CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write);
-        cs.Write(dati, 0, dati.Length);
-        cs.FlushFinalBlock();
-        return ms.ToArray();
+        using (Aes aes = Aes.Create())
+        {
+            aes.Key = chiave;
+            aes.IV = iv;
+
+            using (var decryptor = aes.CreateDecryptor(aes.Key, aes.IV))
+            {
+                return decryptor.TransformFinalBlock(dati, 0, dati.Length);
+            }
+        }
     }
 
     public void UpdateTaskGiorno(GameObject taskGO, string nuovoGiorno)
@@ -395,28 +427,66 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    private void ApplicaStilePriorita(GameObject taskGO, int priorita)
+    {
+
+    Outline outline = taskGO.GetComponentInChildren<Outline>();
+
+
+    if (outline == null)
+    {
+
+        Image bgImage = taskGO.GetComponentInChildren<Image>();
+        if (bgImage != null)
+        {
+            outline = bgImage.gameObject.GetComponent<Outline>();
+            if (outline == null)
+                outline = bgImage.gameObject.AddComponent<Outline>();
+
+            outline.effectDistance = new Vector2(2f, 2f);
+        }
+        else
+        {
+
+            return;
+        }
+    }
+
+    switch (priorita)
+    {
+        case 0: // Bassa
+            outline.effectColor = Color.green;
+            break;
+        case 1: // Media
+            outline.effectColor = Color.yellow;
+            break;
+        case 2: // Alta
+            outline.effectColor = Color.red;
+            break;
+        default:
+            outline.effectColor = Color.white;
+            break;
+    }
+    }
+
     public void EsportaTuttiITask()
     {
-        string path = Path.Combine(Application.persistentDataPath, "tasks_export.json");
+        string path = Path.Combine(Application.persistentDataPath, $"task_backup_week_{slotCorrente}.json");
         string json = JsonUtility.ToJson(taskList, true);
         File.WriteAllText(path, json);
-        Debug.Log("Esportati tutti i task in: " + path);
+        Debug.Log($"Backup esportato in: {path}");
     }
 
     public void ImportaTuttiITask()
     {
-        string path = Path.Combine(Application.persistentDataPath, "tasks_export.json");
+        string path = Path.Combine(Application.persistentDataPath, $"task_backup_week_{slotCorrente}.json");
         if (File.Exists(path))
         {
             string json = File.ReadAllText(path);
             taskList = JsonUtility.FromJson<TaskList>(json);
             SalvaTask();
             CaricaTask();
-            MostraNotifica();
-        }
-        else
-        {
-            Debug.LogWarning("Nessun file di esportazione trovato in: " + path);
         }
     }
-}
+    }
+

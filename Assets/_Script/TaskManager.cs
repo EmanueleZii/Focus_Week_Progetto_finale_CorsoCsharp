@@ -39,6 +39,8 @@ public class TaskManager : MonoBehaviour
     public Button btnClearForm, btnSvuotaTask, btnChangeWeek;
     public Button btnConfermaModifica;
 
+    public Button btnExportAll, btnImportAll;
+
     private int slotCorrente = 1;
     private TaskList taskList = new TaskList();
 
@@ -66,6 +68,9 @@ public class TaskManager : MonoBehaviour
         btnSvuotaTask.onClick.AddListener(SvuotaSettimanaCorrente);
         btnChangeWeek.onClick.AddListener(MostraWeekSelector);
         btnConfermaModifica.onClick.AddListener(ConfermaModifica);
+
+        btnExportAll.onClick.AddListener(EsportaTuttiITask);
+        btnImportAll.onClick.AddListener(ImportaTuttiITask);
 
         List<string> options = new List<string>();
         for (int i = 1; i <= maxSettimane; i++)
@@ -387,6 +392,31 @@ public class TaskManager : MonoBehaviour
         {
             td.giorno = nuovoGiorno;
             SalvaTask();
+        }
+    }
+
+    public void EsportaTuttiITask()
+    {
+        string path = Path.Combine(Application.persistentDataPath, "tasks_export.json");
+        string json = JsonUtility.ToJson(taskList, true);
+        File.WriteAllText(path, json);
+        Debug.Log("Esportati tutti i task in: " + path);
+    }
+
+    public void ImportaTuttiITask()
+    {
+        string path = Path.Combine(Application.persistentDataPath, "tasks_export.json");
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            taskList = JsonUtility.FromJson<TaskList>(json);
+            SalvaTask();
+            CaricaTask();
+            MostraNotifica();
+        }
+        else
+        {
+            Debug.LogWarning("Nessun file di esportazione trovato in: " + path);
         }
     }
 }

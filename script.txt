@@ -13,6 +13,7 @@ public class TaskData
     public string giorno;
     public string titolo;
     public string descrizione;
+    public string dataOraCreazione;
 }
 
 [Serializable]
@@ -25,248 +26,7 @@ public class TaskManager : MonoBehaviour
 {
     public TMP_InputField titoloInput;
     public TMP_InputField task_input;
-    public GameObject taskPrefab;
-    public GameObject SettingPanel;
-    public GameObject notificaPanel;
 
-    public Transform lunParent, martParent, mercParent, giovParent, venParent, sabParent, domParent;
-
-    public Button btnLun, btnMart, btnMerc, btnGiov, btnVen, btnSab, btnDom;
-    public Button btnClearForm, btnSvuotaTask, btnChangeWeek;
-
-    private bool show_setting = true;
-    private int slotCorrente = 1;
-    private TaskList taskList = new TaskList();
-
-    private string FilePercorso => Path.Combine(Application.persistentDataPath, $"task_week_{slotCorrente}.dat");
-
-    private readonly byte[] chiave = Encoding.UTF8.GetBytes("12345678901234567890123456789012");
-    private readonly byte[] iv = Encoding.UTF8.GetBytes("1234567890123456");
-
-    private void Start()
-    {
-        Debug.Log($"Chiave lunghezza byte: {chiave.Length}");
-        Debug.Log($"IV lunghezza byte: {iv.Length}");
-
-        if (chiave.Length != 16 && chiave.Length != 24 && chiave.Length != 32)
-            Debug.LogError("Chiave AES non valida: deve essere 16, 24 o 32 byte");
-        if (iv.Length != 16)
-            Debug.LogError("IV AES deve essere 16 byte");
-
-        btnLun.onClick.AddListener(() => AggiungiTask("Lun"));
-        btnMart.onClick.AddListener(() => AggiungiTask("Mart"));
-        btnMerc.onClick.AddListener(() => AggiungiTask("Merc"));
-        btnGiov.onClick.AddListener(() => AggiungiTask("Giov"));
-        btnVen.onClick.AddListener(() => AggiungiTask("Ven"));
-        btnSab.onClick.AddListener(() => AggiungiTask("Sab"));
-        btnDom.onClick.AddListener(() => AggiungiTask("Dom"));
-
-        btnClearForm.onClick.AddListener(PulisciForm);
-        btnSvuotaTask.onClick.AddListener(SvuotaTuttiITask);
-        btnChangeWeek.onClick.AddListener(CambiaSettimana);
-
-        CaricaTask();
-    }
-
-    public void AggiungiTask(string giorno)
-    {
-        if (string.IsNullOrWhiteSpace(titoloInput.text)) return;
-        if (string.IsNullOrWhiteSpace(task_input.text)) return;
-
-        GameObject nuovoTask = Instantiate(taskPrefab);
-        TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
-        if (txt != null)
-            txt.text = $"{titoloInput.text}: \n{task_input.text}";
-
-        Transform targetParent = giorno switch
-        {
-            "Lun" => lunParent,
-            "Mart" => martParent,
-            "Merc" => mercParent,
-            "Giov" => giovParent,
-            "Ven" => venParent,
-            "Sab" => sabParent,
-            "Dom" => domParent,
-            _ => null
-        };
-
-        if (targetParent != null)
-        {
-            nuovoTask.transform.SetParent(targetParent, false);
-            taskList.tasks.Add(new TaskData { giorno = giorno, titolo = titoloInput.text, descrizione = task_input.text });
-            titoloInput.text = "";
-            task_input.text = "";
-            MostraNotifica();
-            SalvaTask();
-        }
-        else
-        {
-            Destroy(nuovoTask);
-        }
-    }
-
-    public void PulisciForm()
-    {
-        titoloInput.text = "";
-        task_input.text = "";
-    }
-
-    public void SvuotaTuttiITask()
-    {
-        Svuota(lunParent);
-        Svuota(martParent);
-        Svuota(mercParent);
-        Svuota(giovParent);
-        Svuota(venParent);
-        Svuota(sabParent);
-        Svuota(domParent);
-        taskList.tasks.Clear();
-        SalvaTask();
-    }
-
-    private void Svuota(Transform parent)
-    {
-        foreach (Transform child in parent)
-        {
-            Destroy(child.gameObject);
-        }
-    }
-
-    public void MostraNotifica()
-    {
-        if (notificaPanel != null)
-        {
-            notificaPanel.SetActive(true);
-            Invoke(nameof(NascondiNotifica), 2f);
-        }
-    }
-
-    private void NascondiNotifica()
-    {
-        if (notificaPanel != null)
-            notificaPanel.SetActive(false);
-    }
-
-    public void SettingsPanel()
-    {
-        show_setting = !show_setting;
-        SettingPanel.SetActive(show_setting);
-    }
-
-    public void ImpostaFullScreen() => Screen.fullScreen = true;
-    public void ImpostaWindowed() => Screen.fullScreen = false;
-
-    public void CambiaSettimana()
-    {
-        slotCorrente++;
-        if (slotCorrente > 5) slotCorrente = 1;
-        SvuotaTuttiITask();
-        taskList.tasks.Clear();
-        CaricaTask();
-    }
-
-    private void SalvaTask()
-    {
-        string json = JsonUtility.ToJson(taskList, true);
-        byte[] datiJson = Encoding.UTF8.GetBytes(json);
-        byte[] criptati = Cripta(datiJson);
-        File.WriteAllBytes(FilePercorso, criptati);
-    }
-
-    private void CaricaTask()
-    {
-        if (!File.Exists(FilePercorso)) return;
-
-        try
-        {
-            byte[] criptati = File.ReadAllBytes(FilePercorso);
-            byte[] datiJson = Decripta(criptati);
-            string json = Encoding.UTF8.GetString(datiJson);
-            taskList = JsonUtility.FromJson<TaskList>(json);
-
-            foreach (var task in taskList.tasks)
-            {
-                GameObject nuovoTask = Instantiate(taskPrefab);
-                TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
-                if (txt != null)
-                    txt.text = $"{task.titolo}: \n{task.descrizione}";
-
-                Transform targetParent = task.giorno switch
-                {
-                    "Lun" => lunParent,
-                    "Mart" => martParent,
-                    "Merc" => mercParent,
-                    "Giov" => giovParent,
-                    "Ven" => venParent,
-                    "Sab" => sabParent,
-                    "Dom" => domParent,
-                    _ => null
-                };
-
-                if (targetParent != null)
-                    nuovoTask.transform.SetParent(targetParent, false);
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning("Errore nel caricamento dati: " + e.Message);
-        }
-    }
-
-    private byte[] Cripta(byte[] dati)
-    {
-        using Aes aes = Aes.Create();
-        aes.Key = chiave;
-        aes.IV = iv;
-
-        using MemoryStream ms = new();
-        using CryptoStream cs = new(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
-        cs.Write(dati, 0, dati.Length);
-        cs.Close();
-        return ms.ToArray();
-    }
-
-    private byte[] Decripta(byte[] datiCriptati)
-    {
-        using Aes aes = Aes.Create();
-        aes.Key = chiave;
-        aes.IV = iv;
-
-        using MemoryStream ms = new(datiCriptati);
-        using CryptoStream cs = new(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
-        using MemoryStream output = new();
-        cs.CopyTo(output);
-        return output.ToArray();
-    }
-}
------
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-
-[Serializable]
-public class TaskData
-{
-    public string giorno;
-    public string titolo;
-    public string descrizione;
-}
-
-[Serializable]
-public class TaskList
-{
-    public List<TaskData> tasks = new List<TaskData>();
-}
-
-public class TaskManager : MonoBehaviour
-{
-    public TMP_InputField titoloInput;
-    public TMP_InputField task_input;
     public GameObject taskPrefab;
     public GameObject SettingPanel;
     public GameObject notificaPanel;
@@ -277,504 +37,7 @@ public class TaskManager : MonoBehaviour
 
     public Button btnLun, btnMart, btnMerc, btnGiov, btnVen, btnSab, btnDom;
     public Button btnClearForm, btnSvuotaTask, btnChangeWeek;
-
-    private int slotCorrente = 1;
-    private TaskList taskList = new TaskList();
-
-    private string FilePercorso => Path.Combine(Application.persistentDataPath, $"task_week_{slotCorrente}.dat");
-
-    private readonly byte[] chiave = Encoding.UTF8.GetBytes("12345678901234567890123456789012"); // 32 byte
-    private readonly byte[] iv = Encoding.UTF8.GetBytes("InizialVector123"); // 16 byte
-
-    private void Start()
-    {
-        btnLun.onClick.AddListener(() => AggiungiTask("Lun"));
-        btnMart.onClick.AddListener(() => AggiungiTask("Mart"));
-        btnMerc.onClick.AddListener(() => AggiungiTask("Merc"));
-        btnGiov.onClick.AddListener(() => AggiungiTask("Giov"));
-        btnVen.onClick.AddListener(() => AggiungiTask("Ven"));
-        btnSab.onClick.AddListener(() => AggiungiTask("Sab"));
-        btnDom.onClick.AddListener(() => AggiungiTask("Dom"));
-
-        btnClearForm.onClick.AddListener(PulisciForm);
-        btnSvuotaTask.onClick.AddListener(SvuotaTuttiITask);
-        btnChangeWeek.onClick.AddListener(MostraWeekSelector);
-
-        dropdownWeekSelector.onValueChanged.AddListener(SelezionaSettimana);
-
-        weekSelectorPanel.SetActive(false);
-        CaricaTask();
-    }
-
-    public void AggiungiTask(string giorno)
-    {
-        if (string.IsNullOrWhiteSpace(titoloInput.text)) return;
-        if (string.IsNullOrWhiteSpace(task_input.text)) return;
-
-        GameObject nuovoTask = Instantiate(taskPrefab);
-        TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
-        if (txt != null)
-            txt.text = $"{titoloInput.text}: \n{task_input.text}";
-
-        Transform targetParent = giorno switch
-        {
-            "Lun" => lunParent,
-            "Mart" => martParent,
-            "Merc" => mercParent,
-            "Giov" => giovParent,
-            "Ven" => venParent,
-            "Sab" => sabParent,
-            "Dom" => domParent,
-            _ => null
-        };
-
-        if (targetParent != null)
-        {
-            nuovoTask.transform.SetParent(targetParent, false);
-            taskList.tasks.Add(new TaskData { giorno = giorno, titolo = titoloInput.text, descrizione = task_input.text });
-            titoloInput.text = "";
-            task_input.text = "";
-            MostraNotifica();
-            SalvaTask();
-        }
-        else
-        {
-            Destroy(nuovoTask);
-        }
-    }
-
-    public void PulisciForm()
-    {
-        titoloInput.text = "";
-        task_input.text = "";
-    }
-
-    public void SvuotaTuttiITask()
-    {
-        Svuota(lunParent);
-        Svuota(martParent);
-        Svuota(mercParent);
-        Svuota(giovParent);
-        Svuota(venParent);
-        Svuota(sabParent);
-        Svuota(domParent);
-        taskList.tasks.Clear();
-    }
-
-    private void Svuota(Transform parent)
-    {
-        foreach (Transform child in parent)
-        {
-            Destroy(child.gameObject);
-        }
-    }
-
-    public void MostraNotifica()
-    {
-        if (notificaPanel != null)
-        {
-            notificaPanel.SetActive(true);
-            Invoke(nameof(NascondiNotifica), 2f);
-        }
-    }
-
-    private void NascondiNotifica()
-    {
-        if (notificaPanel != null)
-            notificaPanel.SetActive(false);
-    }
-
-    public void MostraWeekSelector()
-    {
-        weekSelectorPanel.SetActive(!weekSelectorPanel.activeSelf);
-    }
-
-    public void SelezionaSettimana(int index)
-    {
-        slotCorrente = index + 1;
-        SvuotaTuttiITask();
-        CaricaTask();
-    }
-
-    public void ImpostaFullScreen() => Screen.fullScreen = true;
-    public void ImpostaWindowed() => Screen.fullScreen = false;
-
-    private void SalvaTask()
-    {
-        try
-        {
-            string json = JsonUtility.ToJson(taskList, true);
-            byte[] datiJson = Encoding.UTF8.GetBytes(json);
-            byte[] criptati = Cripta(datiJson);
-            File.WriteAllBytes(FilePercorso, criptati);
-        }
-        catch (Exception e)
-        {
-            Debug.LogError("Errore salvataggio: " + e.Message);
-        }
-    }
-
-    private void CaricaTask()
-    {
-        taskList = new TaskList();
-        if (!File.Exists(FilePercorso)) return;
-
-        try
-        {
-            byte[] criptati = File.ReadAllBytes(FilePercorso);
-            byte[] datiJson = Decripta(criptati);
-            string json = Encoding.UTF8.GetString(datiJson);
-            taskList = JsonUtility.FromJson<TaskList>(json);
-
-            foreach (var task in taskList.tasks)
-            {
-                GameObject nuovoTask = Instantiate(taskPrefab);
-                TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
-                if (txt != null)
-                    txt.text = $"{task.titolo}: \n{task.descrizione}";
-
-                Transform targetParent = task.giorno switch
-                {
-                    "Lun" => lunParent,
-                    "Mart" => martParent,
-                    "Merc" => mercParent,
-                    "Giov" => giovParent,
-                    "Ven" => venParent,
-                    "Sab" => sabParent,
-                    "Dom" => domParent,
-                    _ => null
-                };
-
-                if (targetParent != null)
-                    nuovoTask.transform.SetParent(targetParent, false);
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning("Errore caricamento: " + e.Message);
-        }
-    }
-
-    private byte[] Cripta(byte[] dati)
-    {
-        using Aes aes = Aes.Create();
-        aes.Key = chiave;
-        aes.IV = iv;
-
-        using MemoryStream ms = new();
-        using CryptoStream cs = new(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
-        cs.Write(dati, 0, dati.Length);
-        cs.Close();
-        return ms.ToArray();
-    }
-
-    private byte[] Decripta(byte[] datiCriptati)
-    {
-        using Aes aes = Aes.Create();
-        aes.Key = chiave;
-        aes.IV = iv;
-
-        using MemoryStream ms = new(datiCriptati);
-        using CryptoStream cs = new(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
-        using MemoryStream output = new();
-        cs.CopyTo(output);
-        return output.ToArray();
-    }
-}
-----
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-
-[Serializable]
-public class TaskData
-{
-    public string giorno;
-    public string titolo;
-    public string descrizione;
-}
-
-[Serializable]
-public class TaskList
-{
-    public List<TaskData> tasks = new List<TaskData>();
-}
-
-public class TaskManager : MonoBehaviour
-{
-    public TMP_InputField titoloInput;
-    public TMP_InputField task_input;
-    public GameObject taskPrefab;
-    public GameObject SettingPanel;
-    public GameObject notificaPanel;
-    public TMP_Dropdown dropdownWeekSelector;
-    public GameObject weekSelectorPanel;
-
-    public Transform lunParent, martParent, mercParent, giovParent, venParent, sabParent, domParent;
-
-    public Button btnLun, btnMart, btnMerc, btnGiov, btnVen, btnSab, btnDom;
-    public Button btnClearForm, btnSvuotaTask, btnChangeWeek;
-
-    private int slotCorrente = 1;
-    private TaskList taskList = new TaskList();
-
-    private const int maxSettimane = 4;  // Numero massimo settimane supportate
-
-    private string FilePercorso => Path.Combine(Application.persistentDataPath, $"task_week_{slotCorrente}.dat");
-
-    private readonly byte[] chiave = Encoding.UTF8.GetBytes("12345678901234567890123456789012"); // 32 byte
-    private readonly byte[] iv = Encoding.UTF8.GetBytes("InizialVector123"); // 16 byte
-
-    private void Start()
-    {
-        // Setup pulsanti giorni
-        btnLun.onClick.AddListener(() => AggiungiTask("Lun"));
-        btnMart.onClick.AddListener(() => AggiungiTask("Mart"));
-        btnMerc.onClick.AddListener(() => AggiungiTask("Merc"));
-        btnGiov.onClick.AddListener(() => AggiungiTask("Giov"));
-        btnVen.onClick.AddListener(() => AggiungiTask("Ven"));
-        btnSab.onClick.AddListener(() => AggiungiTask("Sab"));
-        btnDom.onClick.AddListener(() => AggiungiTask("Dom"));
-
-        btnClearForm.onClick.AddListener(PulisciForm);
-        btnSvuotaTask.onClick.AddListener(SvuotaTuttiITask);
-        btnChangeWeek.onClick.AddListener(MostraWeekSelector);
-
-        // Popola dropdown con le settimane da 1 a maxSettimane
-        List<string> options = new List<string>();
-        for (int i = 1; i <= maxSettimane; i++)
-        {
-            options.Add($"Settimana {i}");
-        }
-        dropdownWeekSelector.ClearOptions();
-        dropdownWeekSelector.AddOptions(options);
-
-        dropdownWeekSelector.onValueChanged.AddListener(SelezionaSettimana);
-
-        weekSelectorPanel.SetActive(false);
-
-        // Carica dati della settimana 1 (slotCorrente = 1 di default)
-        CaricaTask();
-    }
-
-    public void AggiungiTask(string giorno)
-    {
-        if (string.IsNullOrWhiteSpace(titoloInput.text)) return;
-        if (string.IsNullOrWhiteSpace(task_input.text)) return;
-
-        GameObject nuovoTask = Instantiate(taskPrefab);
-        TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
-        if (txt != null)
-            txt.text = $"{titoloInput.text}: \n{task_input.text}";
-
-        Transform targetParent = giorno switch
-        {
-            "Lun" => lunParent,
-            "Mart" => martParent,
-            "Merc" => mercParent,
-            "Giov" => giovParent,
-            "Ven" => venParent,
-            "Sab" => sabParent,
-            "Dom" => domParent,
-            _ => null
-        };
-
-        if (targetParent != null)
-        {
-            nuovoTask.transform.SetParent(targetParent, false);
-            taskList.tasks.Add(new TaskData { giorno = giorno, titolo = titoloInput.text, descrizione = task_input.text });
-            titoloInput.text = "";
-            task_input.text = "";
-            MostraNotifica();
-            SalvaTask();
-        }
-        else
-        {
-            Destroy(nuovoTask);
-        }
-    }
-
-    public void PulisciForm()
-    {
-        titoloInput.text = "";
-        task_input.text = "";
-    }
-
-    public void SvuotaTuttiITask()
-    {
-        Svuota(lunParent);
-        Svuota(martParent);
-        Svuota(mercParent);
-        Svuota(giovParent);
-        Svuota(venParent);
-        Svuota(sabParent);
-        Svuota(domParent);
-        taskList.tasks.Clear();
-    }
-
-    private void Svuota(Transform parent)
-    {
-        foreach (Transform child in parent)
-        {
-            Destroy(child.gameObject);
-        }
-    }
-
-    public void MostraNotifica()
-    {
-        if (notificaPanel != null)
-        {
-            notificaPanel.SetActive(true);
-            Invoke(nameof(NascondiNotifica), 2f);
-        }
-    }
-
-    private void NascondiNotifica()
-    {
-        if (notificaPanel != null)
-            notificaPanel.SetActive(false);
-    }
-
-    public void MostraWeekSelector()
-    {
-        weekSelectorPanel.SetActive(!weekSelectorPanel.activeSelf);
-    }
-
-    public void SelezionaSettimana(int index)
-    {
-        slotCorrente = index + 1; // Set slot 1-based
-        SvuotaTuttiITask();
-        CaricaTask();
-    }
-
-    public void ImpostaFullScreen() => Screen.fullScreen = true;
-    public void ImpostaWindowed() => Screen.fullScreen = false;
-
-    private void SalvaTask()
-    {
-        try
-        {
-            string json = JsonUtility.ToJson(taskList, true);
-            byte[] datiJson = Encoding.UTF8.GetBytes(json);
-            byte[] criptati = Cripta(datiJson);
-            File.WriteAllBytes(FilePercorso, criptati);
-        }
-        catch (Exception e)
-        {
-            Debug.LogError("Errore salvataggio: " + e.Message);
-        }
-    }
-
-    private void CaricaTask()
-    {
-        taskList = new TaskList();
-        if (!File.Exists(FilePercorso)) return;
-
-        try
-        {
-            byte[] criptati = File.ReadAllBytes(FilePercorso);
-            byte[] datiJson = Decripta(criptati);
-            string json = Encoding.UTF8.GetString(datiJson);
-            taskList = JsonUtility.FromJson<TaskList>(json);
-
-            foreach (var task in taskList.tasks)
-            {
-                GameObject nuovoTask = Instantiate(taskPrefab);
-                TMP_Text txt = nuovoTask.GetComponentInChildren<TMP_Text>();
-                if (txt != null)
-                    txt.text = $"{task.titolo}: \n{task.descrizione}";
-
-                Transform targetParent = task.giorno switch
-                {
-                    "Lun" => lunParent,
-                    "Mart" => martParent,
-                    "Merc" => mercParent,
-                    "Giov" => giovParent,
-                    "Ven" => venParent,
-                    "Sab" => sabParent,
-                    "Dom" => domParent,
-                    _ => null
-                };
-
-                if (targetParent != null)
-                    nuovoTask.transform.SetParent(targetParent, false);
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning("Errore caricamento: " + e.Message);
-        }
-    }
-
-    private byte[] Cripta(byte[] dati)
-    {
-        using Aes aes = Aes.Create();
-        aes.Key = chiave;
-        aes.IV = iv;
-
-        using MemoryStream ms = new();
-        using CryptoStream cs = new(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
-        cs.Write(dati, 0, dati.Length);
-        cs.Close();
-        return ms.ToArray();
-    }
-
-    private byte[] Decripta(byte[] datiCriptati)
-    {
-        using Aes aes = Aes.Create();
-        aes.Key = chiave;
-        aes.IV = iv;
-
-        using MemoryStream ms = new(datiCriptati);
-        using CryptoStream cs = new(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
-        using MemoryStream output = new();
-        cs.CopyTo(output);
-        return output.ToArray();
-    }
-}
-------
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-
-[Serializable]
-public class TaskData
-{
-    public string giorno;
-    public string titolo;
-    public string descrizione;
-}
-
-[Serializable]
-public class TaskList
-{
-    public List<TaskData> tasks = new List<TaskData>();
-}
-
-public class TaskManager : MonoBehaviour
-{
-    public TMP_InputField titoloInput;
-    public TMP_InputField task_input;
-    public GameObject taskPrefab;
-    public GameObject SettingPanel;
-    public GameObject notificaPanel;
-    public TMP_Dropdown dropdownWeekSelector;
-    public GameObject weekSelectorPanel;
-
-    public Transform lunParent, martParent, mercParent, giovParent, venParent, sabParent, domParent;
-
-    public Button btnLun, btnMart, btnMerc, btnGiov, btnVen, btnSab, btnDom;
-    public Button btnClearForm, btnSvuotaTask, btnChangeWeek;
+    public Button btnConfermaModifica;
 
     private int slotCorrente = 1;
     private TaskList taskList = new TaskList();
@@ -786,6 +49,9 @@ public class TaskManager : MonoBehaviour
     private readonly byte[] chiave = Encoding.UTF8.GetBytes("12345678901234567890123456789012");
     private readonly byte[] iv = Encoding.UTF8.GetBytes("InizialVector123");
 
+    private GameObject taskInModifica = null;
+    private int indiceTaskInModifica = -1;
+
     private void Start()
     {
         btnLun.onClick.AddListener(() => AggiungiTask("Lun"));
@@ -796,64 +62,27 @@ public class TaskManager : MonoBehaviour
         btnSab.onClick.AddListener(() => AggiungiTask("Sab"));
         btnDom.onClick.AddListener(() => AggiungiTask("Dom"));
 
-        btnClearForm.onClick.AddListener(() =>
-        {
-            PulisciForm();
-            SalvaTask();
-        });
-
-        btnSvuotaTask.onClick.AddListener(() =>
-        {
-            SvuotaTuttiITask();
-            SalvaTask();
-        });
-
+        btnClearForm.onClick.AddListener(PulisciForm);
+        btnSvuotaTask.onClick.AddListener(SvuotaSettimanaCorrente);
         btnChangeWeek.onClick.AddListener(MostraWeekSelector);
+        btnConfermaModifica.onClick.AddListener(ConfermaModifica);
 
         List<string> options = new List<string>();
         for (int i = 1; i <= maxSettimane; i++)
-        {
             options.Add($"Settimana {i}");
-        }
         dropdownWeekSelector.ClearOptions();
         dropdownWeekSelector.AddOptions(options);
-
         dropdownWeekSelector.onValueChanged.AddListener(SelezionaSettimana);
 
         weekSelectorPanel.SetActive(false);
+        btnConfermaModifica.gameObject.SetActive(false);
 
         CaricaTask();
     }
 
-    public void AggiungiTask(string giorno)
+    private Transform GetParentPerGiorno(string giorno)
     {
-        if (string.IsNullOrWhiteSpace(titoloInput.text)) return;
-        if (string.IsNullOrWhiteSpace(task_input.text)) return;
-
-        AggiungiTaskUI(new TaskData { giorno = giorno, titolo = titoloInput.text, descrizione = task_input.text });
-
-        titoloInput.text = "";
-        task_input.text = "";
-
-        MostraNotifica();
-        SalvaTask();
-    }
-
-    private void AggiungiTaskUI(TaskData taskData)
-    {
-        GameObject nuovoTask = Instantiate(taskPrefab);
-
-        TMP_Text txt = nuovoTask.transform.Find("TaskText").GetComponent<TMP_Text>();
-        if (txt != null)
-            txt.text = $"{taskData.titolo}: \n{taskData.descrizione}";
-
-        Button btnEdit = nuovoTask.transform.Find("Btn_Edit").GetComponent<Button>();
-        Button btnDelete = nuovoTask.transform.Find("Btn_Delete").GetComponent<Button>();
-
-        btnEdit.onClick.AddListener(() => EditTask(nuovoTask, taskData));
-        btnDelete.onClick.AddListener(() => DeleteTask(nuovoTask, taskData));
-
-        Transform targetParent = taskData.giorno switch
+        return giorno switch
         {
             "Lun" => lunParent,
             "Mart" => martParent,
@@ -862,13 +91,44 @@ public class TaskManager : MonoBehaviour
             "Ven" => venParent,
             "Sab" => sabParent,
             "Dom" => domParent,
-            _ => null
+            _ => null,
         };
+    }
 
-        if (targetParent != null)
+    private void AggiungiTask(string giorno)
+    {
+        if (taskInModifica != null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(titoloInput.text) || string.IsNullOrWhiteSpace(task_input.text))
+            return;
+
+        GameObject nuovoTask = Instantiate(taskPrefab);
+        string dataOra = DateTime.Now.ToString("g");
+
+        TMP_Text txt = nuovoTask.transform.Find("TaskText")?.GetComponent<TMP_Text>();
+        if (txt != null)
+            txt.text = $"{titoloInput.text} ({dataOra}):\n{task_input.text}";
+
+        Transform parent = GetParentPerGiorno(giorno);
+        if (parent != null)
         {
-            nuovoTask.transform.SetParent(targetParent, false);
-            taskList.tasks.Add(taskData);
+            nuovoTask.transform.SetParent(parent, false);
+
+            TaskData newTaskData = new TaskData()
+            {
+                giorno = giorno,
+                titolo = titoloInput.text,
+                descrizione = task_input.text,
+                dataOraCreazione = dataOra
+            };
+            taskList.tasks.Add(newTaskData);
+
+            AggiungiListenerTask(nuovoTask, newTaskData);
+
+            PulisciForm();
+            SalvaTask();
+            MostraNotifica();
         }
         else
         {
@@ -876,30 +136,103 @@ public class TaskManager : MonoBehaviour
         }
     }
 
-    private void EditTask(GameObject taskGO, TaskData taskData)
+    private void AggiungiListenerTask(GameObject taskGO, TaskData taskData)
     {
-        titoloInput.text = taskData.titolo;
-        task_input.text = taskData.descrizione;
+        Button[] buttons = taskGO.GetComponentsInChildren<Button>();
 
-        taskList.tasks.Remove(taskData);
-        Destroy(taskGO);
-        SalvaTask();
+        foreach (Button btn in buttons)
+            btn.onClick.RemoveAllListeners();
+
+        Button btnEdit = null;
+        Button btnDelete = null;
+
+        foreach (Button btn in buttons)
+        {
+            if (btn.gameObject.name == "BtnDelete")
+                btnDelete = btn;
+            else if (btn.gameObject.name == "BtnEdit")
+                btnEdit = btn;
+        }
+
+        if (btnEdit != null)
+        {
+            btnEdit.onClick.AddListener(() =>
+            {
+                int index = taskList.tasks.IndexOf(taskData);
+                if (index >= 0)
+                    CaricaTaskInForm(taskGO, index);
+            });
+        }
+
+        if (btnDelete != null)
+        {
+            btnDelete.onClick.AddListener(() =>
+            {
+                int index = taskList.tasks.IndexOf(taskData);
+                if (index >= 0)
+                {
+                    taskList.tasks.RemoveAt(index);
+                    Destroy(taskGO);
+
+                    if (taskInModifica == taskGO)
+                    {
+                        PulisciForm();
+                        taskInModifica = null;
+                        indiceTaskInModifica = -1;
+                        btnConfermaModifica.gameObject.SetActive(false);
+                    }
+                    SalvaTask();
+                    MostraNotifica();
+                }
+            });
+        }
     }
 
-    private void DeleteTask(GameObject taskGO, TaskData taskData)
+    private void CaricaTaskInForm(GameObject taskGO, int index)
     {
-        taskList.tasks.Remove(taskData);
-        Destroy(taskGO);
-        SalvaTask();
+        TaskData task = taskList.tasks[index];
+        titoloInput.text = task.titolo;
+        task_input.text = task.descrizione;
+
+        taskInModifica = taskGO;
+        indiceTaskInModifica = index;
+
+        btnConfermaModifica.gameObject.SetActive(true);
+    }
+
+    public void ConfermaModifica()
+    {
+        if (taskInModifica != null && indiceTaskInModifica >= 0)
+        {
+            TaskData task = taskList.tasks[indiceTaskInModifica];
+            task.titolo = titoloInput.text;
+            task.descrizione = task_input.text;
+
+            TMP_Text txt = taskInModifica.transform.Find("TaskText")?.GetComponent<TMP_Text>();
+            if (txt != null)
+                txt.text = $"{task.titolo} ({task.dataOraCreazione}):\n{task.descrizione}";
+
+            PulisciForm();
+            taskInModifica = null;
+            indiceTaskInModifica = -1;
+
+            btnConfermaModifica.gameObject.SetActive(false);
+
+            SalvaTask();
+            MostraNotifica();
+        }
     }
 
     public void PulisciForm()
     {
         titoloInput.text = "";
         task_input.text = "";
+        taskInModifica = null;
+        indiceTaskInModifica = -1;
+        btnConfermaModifica.gameObject.SetActive(false);
     }
 
-    public void SvuotaTuttiITask()
+    public void SvuotaSettimanaCorrente()
     {
         Svuota(lunParent);
         Svuota(martParent);
@@ -908,7 +241,11 @@ public class TaskManager : MonoBehaviour
         Svuota(venParent);
         Svuota(sabParent);
         Svuota(domParent);
+
         taskList.tasks.Clear();
+
+        PulisciForm();
+        SalvaTask();
     }
 
     private void Svuota(Transform parent)
@@ -942,12 +279,9 @@ public class TaskManager : MonoBehaviour
     public void SelezionaSettimana(int index)
     {
         slotCorrente = index + 1;
-        SvuotaTuttiITask();
+        PulisciForm();
         CaricaTask();
     }
-
-    public void ImpostaFullScreen() => Screen.fullScreen = true;
-    public void ImpostaWindowed() => Screen.fullScreen = false;
 
     private void SalvaTask()
     {
@@ -967,7 +301,17 @@ public class TaskManager : MonoBehaviour
     private void CaricaTask()
     {
         taskList = new TaskList();
-        if (!File.Exists(FilePercorso)) return;
+
+        Svuota(lunParent);
+        Svuota(martParent);
+        Svuota(mercParent);
+        Svuota(giovParent);
+        Svuota(venParent);
+        Svuota(sabParent);
+        Svuota(domParent);
+
+        if (!File.Exists(FilePercorso))
+            return;
 
         try
         {
@@ -976,14 +320,23 @@ public class TaskManager : MonoBehaviour
             string json = Encoding.UTF8.GetString(datiJson);
             taskList = JsonUtility.FromJson<TaskList>(json);
 
-            foreach (var task in taskList.tasks)
+            foreach (TaskData task in taskList.tasks)
             {
-                AggiungiTaskUI(task);
+                GameObject nuovoTask = Instantiate(taskPrefab);
+                TMP_Text txt = nuovoTask.transform.Find("TaskText")?.GetComponent<TMP_Text>();
+                if (txt != null)
+                    txt.text = $"{task.titolo} ({task.dataOraCreazione}):\n{task.descrizione}";
+
+                Transform parent = GetParentPerGiorno(task.giorno);
+                if (parent != null)
+                    nuovoTask.transform.SetParent(parent, false);
+
+                AggiungiListenerTask(nuovoTask, task);
             }
         }
         catch (Exception e)
         {
-            Debug.LogWarning("Errore caricamento: " + e.Message);
+            Debug.LogError("Errore caricamento: " + e.Message);
         }
     }
 
@@ -992,24 +345,48 @@ public class TaskManager : MonoBehaviour
         using Aes aes = Aes.Create();
         aes.Key = chiave;
         aes.IV = iv;
-
-        using MemoryStream ms = new();
-        using CryptoStream cs = new(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
+        using MemoryStream ms = new MemoryStream();
+        using CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
         cs.Write(dati, 0, dati.Length);
-        cs.Close();
+        cs.FlushFinalBlock();
         return ms.ToArray();
     }
 
-    private byte[] Decripta(byte[] datiCriptati)
+    private byte[] Decripta(byte[] dati)
     {
         using Aes aes = Aes.Create();
         aes.Key = chiave;
         aes.IV = iv;
+        using MemoryStream ms = new MemoryStream();
+        using CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write);
+        cs.Write(dati, 0, dati.Length);
+        cs.FlushFinalBlock();
+        return ms.ToArray();
+    }
 
-        using MemoryStream ms = new(datiCriptati);
-        using CryptoStream cs = new(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
-        using MemoryStream output = new();
-        cs.CopyTo(output);
-        return output.ToArray();
+    public void UpdateTaskGiorno(GameObject taskGO, string nuovoGiorno)
+    {
+        TMP_Text txt = taskGO.transform.Find("TaskText")?.GetComponent<TMP_Text>();
+        if (txt == null) return;
+
+        TaskData td = null;
+        int idx = -1;
+        for (int i = 0; i < taskList.tasks.Count; i++)
+        {
+            TaskData task = taskList.tasks[i];
+            string expectedText = $"{task.titolo} ({task.dataOraCreazione}):\n{task.descrizione}";
+            if (expectedText == txt.text)
+            {
+                td = task;
+                idx = i;
+                break;
+            }
+        }
+
+        if (td != null)
+        {
+            td.giorno = nuovoGiorno;
+            SalvaTask();
+        }
     }
 }

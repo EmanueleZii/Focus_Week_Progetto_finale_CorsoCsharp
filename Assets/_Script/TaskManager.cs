@@ -7,61 +7,73 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// Classe serializzabile che rappresenta un singolo task
 [Serializable]
 public class TaskData
 {
-    public string giorno;
-    public string titolo;
-    public string descrizione;
-    public string dataOraCreazione;
+    public string giorno;              // Giorno della settimana associato al task
+    public string titolo;              // Titolo del task
+    public string descrizione;         // Descrizione dettagliata del task
+    public string dataOraCreazione;    // Data e ora di creazione del task
 
-    // Nuova proprietà priorità
+    // Nuova proprietà priorità (0 = Bassa, 1 = Media, 2 = Alta)
     public int priorita = 0;
 }
 
+// Classe serializzabile che rappresenta una lista di task
 [Serializable]
 public class TaskList
 {
-    public List<TaskData> tasks = new List<TaskData>();
+    public List<TaskData> tasks = new List<TaskData>(); // Lista di tutti i task della settimana
 }
 
+// Gestore principale dei task, da collegare a un GameObject in Unity
 public class TaskManager : MonoBehaviour
 {
+    // Riferimenti agli input field per titolo e descrizione
     public TMP_InputField titoloInput;
     public TMP_InputField task_input;
 
-    // Aggiunto campo per priorità
+    // Dropdown per la selezione della priorità
     public TMP_Dropdown prioritaDropdown;
 
+    // Prefab del task da istanziare
     public GameObject taskPrefab;
     public GameObject SettingPanel;
     public GameObject notificaPanel;
     public TMP_Dropdown dropdownWeekSelector;
     public GameObject weekSelectorPanel;
 
+    // Riferimenti ai contenitori dei task per ogni giorno
     public Transform lunParent, martParent, mercParent, giovParent, venParent, sabParent, domParent;
 
+    // Bottoni per aggiungere task ai vari giorni
     public Button btnLun, btnMart, btnMerc, btnGiov, btnVen, btnSab, btnDom;
     public Button btnClearForm, btnSvuotaTask, btnChangeWeek;
     public Button btnConfermaModifica;
 
+    // Bottoni per esportare/importare i task
     public Button btnExportAll, btnImportAll;
 
-    private int slotCorrente = 1;
-    private TaskList taskList = new TaskList();
+    private int slotCorrente = 1;              // Settimana attualmente selezionata
+    private TaskList taskList = new TaskList(); // Lista dei task caricati
 
-    private const int maxSettimane = 4;
+    private const int maxSettimane = 4;         // Numero massimo di settimane gestite
 
+    // Percorso del file di salvataggio per la settimana corrente
     private string FilePercorso => Path.Combine(Application.persistentDataPath, $"task_week_{slotCorrente}.dat");
 
+    // Chiave e vettore di inizializzazione per la cifratura AES
     private readonly byte[] chiave = Encoding.UTF8.GetBytes("12345678901234567890123456789012");
     private readonly byte[] iv = Encoding.UTF8.GetBytes("InizialVector123");
 
-    private GameObject taskInModifica = null;
-    private int indiceTaskInModifica = -1;
+    private GameObject taskInModifica = null;   // Riferimento al task in fase di modifica
+    private int indiceTaskInModifica = -1;      // Indice del task in modifica nella lista
 
+    // Inizializzazione di tutti i riferimenti e caricamento dei task
     private void Start()
     {
+        // Collega i bottoni dei giorni alla funzione di aggiunta task
         btnLun.onClick.AddListener(() => AggiungiTask("Lun"));
         btnMart.onClick.AddListener(() => AggiungiTask("Mart"));
         btnMerc.onClick.AddListener(() => AggiungiTask("Merc"));
@@ -70,6 +82,7 @@ public class TaskManager : MonoBehaviour
         btnSab.onClick.AddListener(() => AggiungiTask("Sab"));
         btnDom.onClick.AddListener(() => AggiungiTask("Dom"));
 
+        // Collega i bottoni delle altre funzioni
         btnClearForm.onClick.AddListener(PulisciForm);
         btnSvuotaTask.onClick.AddListener(SvuotaSettimanaCorrente);
         btnChangeWeek.onClick.AddListener(MostraWeekSelector);
@@ -78,6 +91,7 @@ public class TaskManager : MonoBehaviour
         btnExportAll.onClick.AddListener(EsportaTuttiITask);
         btnImportAll.onClick.AddListener(ImportaTuttiITask);
 
+        // Popola il dropdown delle settimane
         List<string> options = new List<string>();
         for (int i = 1; i <= maxSettimane; i++)
             options.Add($"Settimana {i}");
@@ -85,7 +99,7 @@ public class TaskManager : MonoBehaviour
         dropdownWeekSelector.AddOptions(options);
         dropdownWeekSelector.onValueChanged.AddListener(SelezionaSettimana);
 
-        // Setup priorità dropdown (0 = Bassa, 1 = Media, 2 = Alta)
+        // Popola il dropdown delle priorità
         if (prioritaDropdown != null)
         {
             prioritaDropdown.ClearOptions();
@@ -95,9 +109,11 @@ public class TaskManager : MonoBehaviour
         weekSelectorPanel.SetActive(false);
         btnConfermaModifica.gameObject.SetActive(false);
 
+        // Carica i task salvati per la settimana corrente
         CaricaTask();
     }
 
+    // Restituisce il contenitore corretto in base al giorno
     private Transform GetParentPerGiorno(string giorno)
     {
         return giorno switch
@@ -113,26 +129,33 @@ public class TaskManager : MonoBehaviour
         };
     }
 
+    // Aggiunge un nuovo task al giorno selezionato
     private void AggiungiTask(string giorno)
     {
+        // Se si sta modificando un task, non aggiungere
         if (taskInModifica != null)
             return;
 
+        // Controlla che i campi obbligatori siano compilati
         if (string.IsNullOrWhiteSpace(titoloInput.text) || string.IsNullOrWhiteSpace(task_input.text))
             return;
 
+        // Istanzia il prefab del task
         GameObject nuovoTask = Instantiate(taskPrefab);
         string dataOra = DateTime.Now.ToString("g");
 
+        // Imposta il testo del task
         TMP_Text txt = nuovoTask.transform.Find("TaskText")?.GetComponent<TMP_Text>();
         if (txt != null)
             txt.text = $"{titoloInput.text} ({dataOra}):\n{task_input.text}";
 
+        // Aggiunge il task al contenitore del giorno corretto
         Transform parent = GetParentPerGiorno(giorno);
         if (parent != null)
         {
             nuovoTask.transform.SetParent(parent, false);
 
+            // Crea e aggiunge il nuovo task alla lista
             TaskData newTaskData = new TaskData()
             {
                 giorno = giorno,
@@ -143,9 +166,12 @@ public class TaskManager : MonoBehaviour
             };
             taskList.tasks.Add(newTaskData);
 
+            // Collega i listener ai bottoni del task
             AggiungiListenerTask(nuovoTask, newTaskData);
+            // Applica lo stile in base alla priorità
             ApplicaStilePriorita(nuovoTask, newTaskData.priorita);
 
+            // Pulisce il form, salva e mostra notifica
             PulisciForm();
             SalvaTask();
             MostraNotifica();
@@ -156,6 +182,7 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Collega i listener ai bottoni di modifica e cancellazione del task
     private void AggiungiListenerTask(GameObject taskGO, TaskData taskData)
     {
         Button[] buttons = taskGO.GetComponentsInChildren<Button>();
@@ -166,6 +193,7 @@ public class TaskManager : MonoBehaviour
         Button btnEdit = null;
         Button btnDelete = null;
 
+        // Identifica i bottoni tramite nome
         foreach (Button btn in buttons)
         {
             if (btn.gameObject.name == "BtnDelete")
@@ -174,6 +202,7 @@ public class TaskManager : MonoBehaviour
                 btnEdit = btn;
         }
 
+        // Listener per la modifica
         if (btnEdit != null)
         {
             btnEdit.onClick.AddListener(() =>
@@ -184,6 +213,7 @@ public class TaskManager : MonoBehaviour
             });
         }
 
+        // Listener per la cancellazione
         if (btnDelete != null)
         {
             btnDelete.onClick.AddListener(() =>
@@ -194,6 +224,7 @@ public class TaskManager : MonoBehaviour
                     taskList.tasks.RemoveAt(index);
                     Destroy(taskGO);
 
+                    // Se si stava modificando questo task, resetta il form
                     if (taskInModifica == taskGO)
                     {
                         PulisciForm();
@@ -208,6 +239,7 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Carica i dati di un task nel form per la modifica
     private void CaricaTaskInForm(GameObject taskGO, int index)
     {
         TaskData task = taskList.tasks[index];
@@ -222,6 +254,7 @@ public class TaskManager : MonoBehaviour
         btnConfermaModifica.gameObject.SetActive(true);
     }
 
+    // Conferma la modifica di un task esistente
     public void ConfermaModifica()
     {
         if (taskInModifica != null && indiceTaskInModifica >= 0)
@@ -248,6 +281,7 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Pulisce tutti i campi del form
     public void PulisciForm()
     {
         titoloInput.text = "";
@@ -259,6 +293,7 @@ public class TaskManager : MonoBehaviour
         btnConfermaModifica.gameObject.SetActive(false);
     }
 
+    // Svuota tutti i task della settimana corrente
     public void SvuotaSettimanaCorrente()
     {
         Svuota(lunParent);
@@ -275,6 +310,7 @@ public class TaskManager : MonoBehaviour
         SalvaTask();
     }
 
+    // Distrugge tutti i figli di un contenitore (usato per svuotare i giorni)
     private void Svuota(Transform parent)
     {
         foreach (Transform child in parent)
@@ -283,6 +319,7 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Mostra il pannello di notifica per 2 secondi
     public void MostraNotifica()
     {
         if (notificaPanel != null)
@@ -292,17 +329,20 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Nasconde il pannello di notifica
     private void NascondiNotifica()
     {
         if (notificaPanel != null)
             notificaPanel.SetActive(false);
     }
 
+    // Mostra o nasconde il selettore delle settimane
     public void MostraWeekSelector()
     {
         weekSelectorPanel.SetActive(!weekSelectorPanel.activeSelf);
     }
 
+    // Cambia la settimana selezionata e ricarica i task
     public void SelezionaSettimana(int index)
     {
         slotCorrente = index + 1;
@@ -310,6 +350,7 @@ public class TaskManager : MonoBehaviour
         CaricaTask();
     }
 
+    // Salva i task su file cifrato
     private void SalvaTask()
     {
         try
@@ -325,10 +366,12 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Carica i task dal file cifrato
     private void CaricaTask()
     {
         taskList = new TaskList();
 
+        // Svuota tutti i giorni prima di caricare
         Svuota(lunParent);
         Svuota(martParent);
         Svuota(mercParent);
@@ -347,6 +390,7 @@ public class TaskManager : MonoBehaviour
             string json = Encoding.UTF8.GetString(datiJson);
             taskList = JsonUtility.FromJson<TaskList>(json);
 
+            // Ricrea i task nell'interfaccia
             foreach (TaskData task in taskList.tasks)
             {
                 GameObject nuovoTask = Instantiate(taskPrefab);
@@ -373,6 +417,7 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Cifra i dati usando AES
     private byte[] Cripta(byte[] dati)
     {
         using (Aes aes = Aes.Create())
@@ -387,6 +432,7 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Decifra i dati usando AES
     private byte[] Decripta(byte[] dati)
     {
         using (Aes aes = Aes.Create())
@@ -401,6 +447,7 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Aggiorna il giorno di un task (usato per drag & drop)
     public void UpdateTaskGiorno(GameObject taskGO, string nuovoGiorno)
     {
         TMP_Text txt = taskGO.transform.Find("TaskText")?.GetComponent<TMP_Text>();
@@ -427,48 +474,47 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    // Applica uno stile visivo al task in base alla priorità (bordo colorato)
     private void ApplicaStilePriorita(GameObject taskGO, int priorita)
     {
+        Outline outline = taskGO.GetComponentInChildren<Outline>();
 
-    Outline outline = taskGO.GetComponentInChildren<Outline>();
-
-
-    if (outline == null)
-    {
-
-        Image bgImage = taskGO.GetComponentInChildren<Image>();
-        if (bgImage != null)
+        if (outline == null)
         {
-            outline = bgImage.gameObject.GetComponent<Outline>();
-            if (outline == null)
-                outline = bgImage.gameObject.AddComponent<Outline>();
+            Image bgImage = taskGO.GetComponentInChildren<Image>();
+            if (bgImage != null)
+            {
+                outline = bgImage.gameObject.GetComponent<Outline>();
+                if (outline == null)
+                    outline = bgImage.gameObject.AddComponent<Outline>();
 
-            outline.effectDistance = new Vector2(2f, 2f);
+                outline.effectDistance = new Vector2(2f, 2f);
+            }
+            else
+            {
+                return;
+            }
         }
-        else
+
+        // Cambia il colore del bordo in base alla priorità
+        switch (priorita)
         {
-
-            return;
+            case 0: // Bassa
+                outline.effectColor = Color.green;
+                break;
+            case 1: // Media
+                outline.effectColor = Color.yellow;
+                break;
+            case 2: // Alta
+                outline.effectColor = Color.red;
+                break;
+            default:
+                outline.effectColor = Color.white;
+                break;
         }
     }
 
-    switch (priorita)
-    {
-        case 0: // Bassa
-            outline.effectColor = Color.green;
-            break;
-        case 1: // Media
-            outline.effectColor = Color.yellow;
-            break;
-        case 2: // Alta
-            outline.effectColor = Color.red;
-            break;
-        default:
-            outline.effectColor = Color.white;
-            break;
-    }
-    }
-
+    // Esporta tutti i task della settimana corrente in un file JSON non cifrato
     public void EsportaTuttiITask()
     {
         string path = Path.Combine(Application.persistentDataPath, $"task_backup_week_{slotCorrente}.json");
@@ -477,6 +523,7 @@ public class TaskManager : MonoBehaviour
         Debug.Log($"Backup esportato in: {path}");
     }
 
+    // Importa i task da un file JSON di backup e li salva cifrati
     public void ImportaTuttiITask()
     {
         string path = Path.Combine(Application.persistentDataPath, $"task_backup_week_{slotCorrente}.json");
@@ -488,5 +535,4 @@ public class TaskManager : MonoBehaviour
             CaricaTask();
         }
     }
-    }
-
+}

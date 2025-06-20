@@ -8,6 +8,7 @@ using Unity.VisualScripting;
 public class ButtonUIMenager : MonoBehaviour
 {
     public GameObject settingbtn;
+    public GameObject settimanePanel;
     private bool isSettingsOpen = false;
     public void TutorialButton()
     {
@@ -30,5 +31,9 @@ public class ButtonUIMenager : MonoBehaviour
         // Debug.Log("Settings Button Clicked");
         isSettingsOpen = !isSettingsOpen;
         settingbtn.SetActive(isSettingsOpen);
+        if (!isSettingsOpen)
+        {
+            settimanePanel.SetActive(false);
+        }
     }
 }

@@ -20,6 +20,11 @@ public class ButtonUIMenager : MonoBehaviour
         SceneManager.LoadScene("FocusWeek");
     }
 
+    public void QuitButton()
+    {
+        Application.Quit();
+    }
+
     public void SettingsButton()
     {
         // Debug.Log("Settings Button Clicked");

@@ -27,7 +27,7 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
 - [x] Completamento task con checkbox
 - [x] Salvataggio automatico
 - [x] Notifiche Push 
-- [ ]
+- [x] Sistema Di Drag And Drop 
 
 ## ▶️ Come Avviare il Progetto
 

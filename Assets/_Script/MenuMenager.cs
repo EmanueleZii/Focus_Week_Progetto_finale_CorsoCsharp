@@ -11,6 +11,8 @@ public class MenuManager : MonoBehaviour
 
     private bool show_setting = true;
     public GameObject SettingPanel;
+    private bool creditActive = false;
+    public GameObject PanelCredits;
 
     void Start()
     {
@@ -61,5 +63,10 @@ public class MenuManager : MonoBehaviour
     public void ImpostaWindowed()
     {
         Screen.fullScreen = false;
+    }
+    public void creditsButton()
+    {
+        creditActive = !creditActive;
+        PanelCredits.SetActive(creditActive);
     }
 }

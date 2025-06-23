@@ -24,7 +24,6 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
 - [x] Visualizzazione lista task giornalieri
 - [x] Aggiunta di nuovi task
 - [x] Modifica e cancellazione task
-- [x] Completamento task con checkbox
 - [x] Salvataggio automatico
 - [x] Notifiche Push 
 - [x] Sistema Di Drag And Drop

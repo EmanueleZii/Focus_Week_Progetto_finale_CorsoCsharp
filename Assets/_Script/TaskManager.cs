@@ -7,26 +7,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-// Classe serializzabile che rappresenta un singolo task
-[Serializable]
-public class TaskData
-{
-    public string giorno;              // Giorno della settimana associato al task
-    public string titolo;              // Titolo del task
-    public string descrizione;         // Descrizione dettagliata del task
-    public string dataOraCreazione;    // Data e ora di creazione del task
-
-    // Nuova proprietà priorità (0 = Bassa, 1 = Media, 2 = Alta)
-    public int priorita = 0;
-}
-
-// Classe serializzabile che rappresenta una lista di task
-[Serializable]
-public class TaskList
-{
-    public List<TaskData> tasks = new List<TaskData>(); // Lista di tutti i task della settimana
-}
-
 // Gestore principale dei task, da collegare a un GameObject in Unity
 public class TaskManager : MonoBehaviour
 {

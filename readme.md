@@ -36,5 +36,6 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
    git clone https://github.com/tuo-username/weekly-task-manager-unity6.git
 
 ### Collaboratori
-- Daniele M. Capasso
-- Leo Betti
+- Daniele M. Capasso Come Unity Developer
+- Leo Betti Come Graphics Designer
+- Zignale Emanuel UI Designer

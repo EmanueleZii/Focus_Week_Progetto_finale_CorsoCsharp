@@ -43,10 +43,8 @@ public class TaskManager : MonoBehaviour
     // Percorso del file di salvataggio per la settimana corrente
     private string FilePercorso => Path.Combine(Application.persistentDataPath, $"task_week_{slotCorrente}.dat");
 
-    // Chiave e vettore di inizializzazione per la cifratura AES
-    private readonly byte[] chiave = Encoding.UTF8.GetBytes("12345678901234567890123456789012");
-    private readonly byte[] iv = Encoding.UTF8.GetBytes("InizialVector123");
-
+    public EncryptionUtility encryptionUtility = new EncryptionUtility(); // Istanza della utility di cifratura
+    
     private GameObject taskInModifica = null;   // Riferimento al task in fase di modifica
     private int indiceTaskInModifica = -1;      // Indice del task in modifica nella lista
 
@@ -337,7 +335,7 @@ public class TaskManager : MonoBehaviour
         {
             string json = JsonUtility.ToJson(taskList, true);
             byte[] datiJson = Encoding.UTF8.GetBytes(json);
-            byte[] criptati = Cripta(datiJson);
+            byte[] criptati = encryptionUtility.Cripta(datiJson);
             File.WriteAllBytes(FilePercorso, criptati);
         }
         catch (Exception e)
@@ -366,7 +364,7 @@ public class TaskManager : MonoBehaviour
         try
         {
             byte[] criptati = File.ReadAllBytes(FilePercorso);
-            byte[] datiJson = Decripta(criptati);
+            byte[] datiJson = encryptionUtility.Decripta(criptati);
             string json = Encoding.UTF8.GetString(datiJson);
             taskList = JsonUtility.FromJson<TaskList>(json);
 
@@ -396,37 +394,6 @@ public class TaskManager : MonoBehaviour
             Debug.LogError("Errore caricamento: " + e.Message);
         }
     }
-
-    // Cifra i dati usando AES
-    private byte[] Cripta(byte[] dati)
-    {
-        using (Aes aes = Aes.Create())
-        {
-            aes.Key = chiave;
-            aes.IV = iv;
-
-            using (var encryptor = aes.CreateEncryptor(aes.Key, aes.IV))
-            {
-                return encryptor.TransformFinalBlock(dati, 0, dati.Length);
-            }
-        }
-    }
-
-    // Decifra i dati usando AES
-    private byte[] Decripta(byte[] dati)
-    {
-        using (Aes aes = Aes.Create())
-        {
-            aes.Key = chiave;
-            aes.IV = iv;
-
-            using (var decryptor = aes.CreateDecryptor(aes.Key, aes.IV))
-            {
-                return decryptor.TransformFinalBlock(dati, 0, dati.Length);
-            }
-        }
-    }
-
     // Aggiorna il giorno di un task (usato per drag & drop)
     public void UpdateTaskGiorno(GameObject taskGO, string nuovoGiorno)
     {

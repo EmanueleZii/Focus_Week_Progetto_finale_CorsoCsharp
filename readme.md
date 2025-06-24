@@ -35,7 +35,7 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
    ```bash
    git clone https://github.com/tuo-username/weekly-task-manager-unity6.git
 
-### Collaboratori
+### 👥 Collaboratori
 - Daniele M. Capasso Come Unity Developer (Profilo Github: [SalsarDev](https://github.com/SalsarDev) )
 - Leo Betti Come Graphics Designer    (Profilo Github: [Besky037](https://github.com/Besky037) )
 - Zignale Emanuele UI Designer

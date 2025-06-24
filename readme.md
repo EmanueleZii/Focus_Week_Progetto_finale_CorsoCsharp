@@ -38,4 +38,4 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
 ### Collaboratori
 - Daniele M. Capasso Come Unity Developer
 - Leo Betti Come Graphics Designer
-- Zignale Emanuel UI Designer
+- Zignale Emanuele UI Designer

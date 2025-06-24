@@ -20,7 +20,6 @@ public class TaskManager : MonoBehaviour
     // Prefab del task da istanziare
     public GameObject taskPrefab;
     public GameObject SettingPanel;
-    public GameObject notificaPanel;
     public TMP_Dropdown dropdownWeekSelector;
     public GameObject weekSelectorPanel;
 
@@ -44,7 +43,7 @@ public class TaskManager : MonoBehaviour
     private string FilePercorso => Path.Combine(Application.persistentDataPath, $"task_week_{slotCorrente}.dat");
 
     public EncryptionUtility encryptionUtility = new EncryptionUtility(); // Istanza della utility di cifratura
-    
+    NotificaPanel notificaPanel = new NotificaPanel(); // Istanza del pannello di notifica
     private GameObject taskInModifica = null;   // Riferimento al task in fase di modifica
     private int indiceTaskInModifica = -1;      // Indice del task in modifica nella lista
 
@@ -152,7 +151,7 @@ public class TaskManager : MonoBehaviour
             // Pulisce il form, salva e mostra notifica
             PulisciForm();
             SalvaTask();
-            MostraNotifica();
+           notificaPanel.MostraNotifica();
         }
         else
         {
@@ -211,7 +210,7 @@ public class TaskManager : MonoBehaviour
                         btnConfermaModifica.gameObject.SetActive(false);
                     }
                     SalvaTask();
-                    MostraNotifica();
+                    notificaPanel.MostraNotifica();
                 }
             });
         }
@@ -255,7 +254,7 @@ public class TaskManager : MonoBehaviour
             btnConfermaModifica.gameObject.SetActive(false);
 
             SalvaTask();
-            MostraNotifica();
+            notificaPanel.MostraNotifica();
         }
     }
 
@@ -297,23 +296,7 @@ public class TaskManager : MonoBehaviour
         }
     }
 
-    // Mostra il pannello di notifica per 2 secondi
-    public void MostraNotifica()
-    {
-        if (notificaPanel != null)
-        {
-            notificaPanel.SetActive(true);
-            Invoke(nameof(NascondiNotifica), 2f);
-        }
-    }
-
-    // Nasconde il pannello di notifica
-    private void NascondiNotifica()
-    {
-        if (notificaPanel != null)
-            notificaPanel.SetActive(false);
-    }
-
+    
     // Mostra o nasconde il selettore delle settimane
     public void MostraWeekSelector()
     {

@@ -20,6 +20,4 @@ public class NotificaPanel : MonoBehaviour
             Invoke(nameof(NascondiNotifica), 2f);
         }
     }
-
-
 }

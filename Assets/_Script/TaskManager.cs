@@ -33,7 +33,6 @@ public class TaskManager : MonoBehaviour
 
     // Bottoni per esportare/importare i task
     public Button btnExportAll, btnImportAll;
-
     private int slotCorrente = 1;              // Settimana attualmente selezionata
     private TaskList taskList = new TaskList(); // Lista dei task caricati
 
@@ -151,7 +150,7 @@ public class TaskManager : MonoBehaviour
             // Pulisce il form, salva e mostra notifica
             PulisciForm();
             SalvaTask();
-           notificaPanel.MostraNotifica();
+            notificaPanel.MostraNotifica();
         }
         else
         {

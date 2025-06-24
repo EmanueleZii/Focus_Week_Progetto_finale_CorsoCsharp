@@ -34,3 +34,7 @@ Un'applicazione di gestione settimanale dei task sviluppata con **Unity 6**. Pro
 1. Clona il repository:
    ```bash
    git clone https://github.com/tuo-username/weekly-task-manager-unity6.git
+
+### Collaboratori
+- Daniele m. Capasso
+- Leo Betti
